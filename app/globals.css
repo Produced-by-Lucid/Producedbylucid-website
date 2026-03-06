@@ -1,0 +1,197 @@
+@import "tailwindcss";
+
+:root {
+  --color-cream: #FFE1CD;
+}
+
+@layer base {
+  
+  .bg-cream { background-color: #FFE1CD; }
+  .border-cream { border-color: #FFE1CD; }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--color-cream);
+  font-family: var(--font-paragraph), serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6, button {
+  font-family: var(--font-display), sans-serif;
+}
+
+@keyframes twinkle-1 {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.2); }
+  50% { transform: scale(0.9); }
+  75% { transform: scale(1.15); }
+}
+
+@keyframes twinkle-2 {
+  0%, 100% { transform: scale(1); }
+  30% { transform: scale(0.85); }
+  60% { transform: scale(1.25); }
+  80% { transform: scale(0.95); }
+}
+
+.twinkle-star-1 {
+  animation: twinkle-1 3.5s ease-in-out infinite;
+}
+
+.twinkle-star-2 {
+  animation: twinkle-2 2.8s ease-in-out infinite 0.5s;
+}
+
+/* Text outline/stroke effect */
+.text-outline {
+  -webkit-text-stroke: 0.3px #FFE1CD;
+  -webkit-text-fill-color: transparent;
+  text-stroke: 0.3px #FFE1CD;
+  color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  paint-order: stroke fill;
+
+  
+}
+
+/* Infinite horizontal scroll animation */
+@keyframes scroll-x {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-scroll-x {
+  animation: scroll-x 36s linear infinite;
+}
+
+.projects-scene {
+  position: relative;
+  width: min(92vw, 900px);
+  height: clamp(320px, 56vw, 520px);
+  display: grid;
+  place-items: center;
+  perspective: 1000px;
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+}
+
+.projects-scene.is-dragging {
+  cursor: grabbing;
+}
+
+.project-card-caption {
+  
+}
+
+.projects-ring {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 420ms cubic-bezier(0.22, 0.8, 0.25, 1);
+  /* Ensure no CSS-driven spin animation overrides JS control */
+  animation: none !important;
+
+}
+
+.projects-ring.is-dragging {
+  transition: none;
+}
+
+.project-card {
+  position: absolute;
+  filter: grayscale(100);
+ 
+  top: 50%;
+  left: 50%;
+  width: clamp(150px, 3vw, 140px);
+  height: clamp(140px, 16vw, 190px);
+  overflow: visible; /* allow shadow to show */
+  transform-style: preserve-3d;
+  transform:
+    translate(-50%, -50%)
+    rotateY(calc((360deg / var(--count)) * var(--index)))
+    translateZ(clamp(240px, 38vw, 480px));
+  backface-visibility: hidden;
+}
+
+.project-card.is-active {
+  /* box-shadow: 0 24px 55px rgba(0, 0, 0, 0.55); */
+  transform:
+    translate(-50%, -50%)
+      
+
+    rotateY(calc((360deg / var(--count)) * var(--index)))
+    translateZ(clamp(240px, 38vw, 480px))
+    translateY(-10px)
+    scale(1.04);
+  filter: grayscale(0);
+  }
+
+.card-image {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+
+.project-card.is-active .project-card-title {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.project-core {
+  position: absolute;
+  width: clamp(120px, 20vw, 220px);
+  height: clamp(160px, 24vw, 300px);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  transform: translateZ(10px);
+}
+
+@media (max-width: 768px) {
+  .projects-scene {
+    height: 380px;
+    perspective: 1000px;
+  }
+}
+
+/* override after Tailwind build to ensure no rotation animation */
+.projects-ring {
+  animation: none !important;
+}
+
+/* Hero mask: vertical by default, horizontal sides only on small screens */
+.hero-mask {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 30%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 30%);
+}
+
+@media (max-width: 640px) {
+  .hero-mask {
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
+  }
+}
+
+/* ProjectsLinear hover focus: gray out non-hovered cards using :not selector */
+.projects-linear-image,
+.projects-linear-video {
+  filter: grayscale(0%);
+  transition: filter 280ms ease, transform 200ms ease;
+}
+
+.projects-linear-track:hover .projects-linear-card:not(:hover) :is(.projects-linear-image, .projects-linear-video) {
+  filter: grayscale(100%);
+}

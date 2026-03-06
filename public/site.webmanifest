@@ -1,0 +1,21 @@
+{
+  "name": "Produced by Lucid",
+  "short_name": "Lucid",
+  "description": "Produced by Lucid is an event planning and production agency creating bold, elevated experiences for brands and events.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFE1CD",
+  "theme_color": "#174826",
+  "icons": [
+    {
+      "src": "/fav-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/fav-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
