@@ -219,7 +219,7 @@ export default function ProjectsLinear() {
           onPointerCancel={onPointerUp}
           className="relative w-full p-3 cursor-grab active:cursor-grabbing select-none"
         >
-          <FollowMouseDrag targetRef={marqueeViewportRef} label="visit" />
+          <FollowMouseDrag targetRef={marqueeViewportRef} label="view" />
 
           <div ref={marqueeTrackRef} className="projects-linear-track mb-20 flex w-max items-stretch gap-[6vw] sm:gap-[10vw]">
             {loopCards.map((card, index) => (
