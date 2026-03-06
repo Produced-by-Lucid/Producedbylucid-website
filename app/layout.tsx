@@ -1,3 +1,4 @@
+import * as React from "react";
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { Zilla_Slab } from "next/font/google";
@@ -78,7 +79,7 @@ export const metadata: Metadata = {
     icon: [
       { url: "/fav-icon.png", type: "image/png", sizes: "16x16" },
       { url: "/fav-icon.png", type: "image/png", sizes: "32x32" },
-      { url: "/fav-icon.png", type: "image/png", sizes: "180x180" },
+      { url: "/fav-icon-180.png", type: "image/png", sizes: "180x180" },
       { url: "/favicon.ico", sizes: "any" },
     ],
     shortcut: [{ url: "/fav-icon.png", type: "image/png", sizes: "32x32" }],
@@ -128,13 +129,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const bodyClassName = `${castio.variable} ${zillaSlab.variable} antialiased`;
+
   return (
     <html lang="en">
-      <body
-        className={`${castio.variable} ${zillaSlab.variable} antialiased`}
-      >
-        {children}
-      </body>
+      <body className={bodyClassName}>{children}</body>
     </html>
   );
 }
