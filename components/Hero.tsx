@@ -73,32 +73,30 @@ export default function Hero({ mounted }: HeroProps) {
   }, [mounted]);
 
   return (
-    <section id="home" ref={heroRef} className="relative  flex sm:min-h-[65vh] w-full scroll-mt-40 min-h-[50vh] sm:pt-10  max-sm:-mb-30  flex-col items-center justify-between  px-4  py-16 sm:py-2  ">
+    <section id="home" ref={heroRef} className="relative  flex sm:min-h-[70vh] md:min-h-[65vh] w-full scroll-mt-40 min-h-[50vh] sm:pt-10  max-sm:-mb-30  flex-col items-center justify-between  px-4  py-16 sm:py-2  ">
       {/* Main SVG with curved text and logo background */}
       <Image src="/3d-logo.png" alt="Lucid logo" width={200} height={100} className="z-0  -mb-20 relative z-5 h-auto w-68 object-contain sm:w-68 " />
       
       
-<h2 className=" sm:hidden block font-extrabold uppercase !text-[#1B5E3F] text-6xl tracking-tight  text-center mb-10  relative    ">bold ideas. <br/> elevated experience.</h2>
+      <h2 className=" sm:hidden block font-extrabold uppercase text-[#1B5E3F]! text-6xl tracking-tight  text-center mb-10  relative    ">bold ideas. <br/> elevated experience.</h2>
       <div className="absolute inset-0 sm:-translate-y-20 -translate-y-40    min-h-[20vh] ">
 
         <div
-          className=" relative top-28 flex h-[52vh]  w-full items-center sm:top-48 max-sm:hidden   sm:h-screen"
+          className=" relative top-28 flex h-[52vh]  w-full items-center sm:top-24 md:top-32 lg:32 max-sm:hidden   sm:h-screen"
         >
           <svg
             ref={svgRef}
             viewBox="0 0 1200 850"
             className="absolute left-0  w-full scale-140 sm:top-14 sm:h-screen sm:scale-110"
             xmlns="http://www.w3.org/2000/svg"
+            xmlnsXlink="http://www.w3.org/1999/xlink"
             preserveAspectRatio="xMidYMid slice"
           >
             <defs>
-              {/* Elliptical path for curved text */}
-              <ellipse
+              {/* Explicit path arc is more reliable than ellipse refs in some browsers. */}
+              <path
                 id="curve"
-                cx="600"
-                cy="600"
-                rx="600"
-                ry="400"
+                d="M 100 560 A 500 320 0 0 1 1100 560"
                 fill="none"
               />
             </defs>
@@ -111,7 +109,7 @@ export default function Hero({ mounted }: HeroProps) {
               letterSpacing="1"
               fontWeight="700"
             >
-              <textPath href="#curve" startOffset="75%" textAnchor="middle">
+              <textPath href="#curve" xlinkHref="#curve" startOffset="50%" textAnchor="middle">
                bold ideas * elevated experiences
               </textPath>
             </text>
@@ -126,15 +124,16 @@ export default function Hero({ mounted }: HeroProps) {
 
         {/* Agency Description */}
         <div ref={textRef} className="max-w-xl px-4 sm:px-6">
-          <p className="mb-3 text-xl font-bold !text-[#1B5E3F] sm:text-2xl md:text-3xl">
+          <p className="mb-3 text-xl font-bold text-[#1B5E3F]! sm:text-2xl md:text-3xl">
             We are an Event Planning & Production  Agency:
           </p>
           <p className="max-w-2xl text-base leading-relaxed text-[#2a3a2a] sm:text-lg md:text-xl">
            Creating unique event experiences for top Brands
           </p>
-          <a href="#contact" className="mt-6 inline-block rounded-full bg-[#DB612D] px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#ffe8d9] hover:text-black ">Let's talk</a>
+          <a href="https://calendly.com/produced_by_lucid/event-consultation" className="mt-6 inline-block rounded-full bg-[#DB612D] px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#ffe8d9] hover:text-black ">Let's talk</a>
         </div>
       </div>
     </section>
+  
   );
 }

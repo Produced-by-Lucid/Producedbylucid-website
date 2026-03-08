@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Lenis from '@studio-freight/lenis';
 import Image from 'next/image';
 import OurServicesGrid from './OurServicesGrid';
 import BlogPosts from './BlogPosts';
@@ -26,18 +25,10 @@ export default function LandingPage() {
   useEffect(() => {
     if (!mounted) return;
 
-    // Initialize Lenis smooth scroll
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-    });
-
-    function raf(time: number) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
+    // Use native CSS smooth scroll instead of Lenis for better browser compatibility
+    if (typeof window !== 'undefined') {
+      document.documentElement.style.scrollBehavior = 'smooth';
     }
-
-    requestAnimationFrame(raf);
 
     // Features animation with ScrollTrigger
     gsap.from('.feature-card', {
@@ -133,8 +124,10 @@ export default function LandingPage() {
     });
 
     return () => {
-      lenis.destroy();
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+      if (typeof window !== 'undefined') {
+        document.documentElement.style.scrollBehavior = 'auto';
+      }
     };
   }, [mounted]);
 
@@ -162,7 +155,7 @@ export default function LandingPage() {
           <BlogPosts />
         </SectionsInViewMotion>
         {/* Footer */}
-        <footer id="contact" className="relative z-10 flex min-h-[60vh] scroll-mt-24 flex-col justify-end gap-14 bg-gradient-to-b from-black 60% to-[#19532B] py-8 sm:gap-20 sm:py-12">
+        <footer id="contact" className="relative z-10 flex min-h-[60vh] scroll-mt-24 flex-col justify-end gap-14 bg-linear-to-b from-black 60% to-[#19532B] py-8 sm:gap-20 sm:py-12">
           <div className="w-full text-center space-y-8 text-cream/60">
             {/* orange gradient  */}
             <div className="absolute bottom-0 z-0 mb-8 h-32 w-full sm:h-48 md:h-64">
@@ -196,7 +189,7 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="relative flex w-full flex-col items-center justify-between gap-6 px-4 sm:flex-row sm:gap-4">
-              <a className="  w-full justify-center rounded-full min-w-xs bg-cream px-6 py-3 font-bold text-black transition-colors hover:bg-cream/80 sm:w-auto">
+              <a href='https://calendly.com/produced_by_lucid/event-consultation' className="  w-full justify-center rounded-full min-w-xs bg-cream px-6 py-3 font-bold text-black transition-colors hover:bg-cream/80 sm:w-auto">
                 Get in touch
               </a>
             

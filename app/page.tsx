@@ -41,7 +41,7 @@ export default function Home() {
           width={400}
           height={400}
           alt="obj"
-          className="h-64 w-64 blur-2xl sm:h-[400px] sm:w-[400px]"
+          className="h-64 w-64 blur-2xl sm:h-100 sm:w-100"
         />
       </div>
       <SectionsInViewMotion>

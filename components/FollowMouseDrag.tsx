@@ -18,21 +18,27 @@ export default function FollowMouseDrag({ targetRef, label = 'DRAG' }: FollowMou
     const cursor = cursorRef.current;
     if (!target || !cursor) return;
 
-    // Use fixed positioning relative to the viewport
-    gsap.set(cursor, { xPercent: -50, yPercent: -50, autoAlpha: 0, scale: 0.9, position: 'fixed', top: 0, left: 0 });
-    
-    const moveX = gsap.quickTo(cursor, 'x', { duration: 0.1, ease: 'none' });
-    const moveY = gsap.quickTo(cursor, 'y', { duration: 0.1, ease: 'none' });
+    // Keep positioning in viewport coordinates so the element can be centered exactly.
+    gsap.set(cursor, { autoAlpha: 0, scale: 0.9, position: 'fixed', top: 0, left: 0, x: 0, y: 0 });
+
+    const moveX = gsap.quickTo(cursor, 'x', { duration: 0.08, ease: 'power2.out' });
+    const moveY = gsap.quickTo(cursor, 'y', { duration: 0.08, ease: 'power2.out' });
+
+    const moveToPointerCenter = (clientX: number, clientY: number) => {
+      const { width, height } = cursor.getBoundingClientRect();
+      moveX(clientX - width / 2);
+      moveY(clientY - height / 2);
+    };
 
     const handleEnter = (event: MouseEvent) => {
       target.classList.add('cursor-none');
-      gsap.set(cursor, { x: event.clientX, y: event.clientY });
+      const { width, height } = cursor.getBoundingClientRect();
+      gsap.set(cursor, { x: event.clientX - width / 2, y: event.clientY - height / 2 });
       gsap.to(cursor, { autoAlpha: 1, scale: 1, duration: 0.2, ease: 'power2.out', overwrite: 'auto' });
     };
 
     const handleMove = (event: MouseEvent) => {
-      moveX(event.clientX);
-      moveY(event.clientY);
+      moveToPointerCenter(event.clientX, event.clientY);
     };
 
     const handleLeave = () => {
@@ -55,7 +61,7 @@ export default function FollowMouseDrag({ targetRef, label = 'DRAG' }: FollowMou
   return (
     <div
       ref={cursorRef}
-      className="fixed left-0 -top-[50%] pointer-events-none z-[100] flex items-center gap-2 rounded-full border border-white/55 bg-[#eb5510] px-6 py-4 text-xl font-semibold tracking-[0.2em] text-white backdrop-blur-md"
+      className="fixed top-0 left-0 pointer-events-none z-100 flex items-center gap-2 rounded-full border border-white/55 bg-[#eb5510] px-6 py-4 text-xl font-semibold tracking-[0.2em] text-white backdrop-blur-md"
     >
       {label}
       <PiArrowUpRightLight className="text-2xl" />
