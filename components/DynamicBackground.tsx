@@ -27,6 +27,22 @@ export default function DynamicBackground() {
 
     let animationFrameId: number;
     let blobs: Blob[] = [];
+    const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const isMobileSafari = /iP(ad|hone|od)/.test(userAgent) && /WebKit/.test(userAgent) && !/CriOS|FxiOS|EdgiOS/.test(userAgent);
+    const drawBlur = isMobileSafari ? 48 : 85;
+
+    // iOS Safari can be unreliable with ctx.filter blur on big canvases.
+    // Use CSS blur fallback there for consistent rendering.
+    if (isMobileSafari) {
+      canvas.style.filter = `blur(${drawBlur}px)`;
+      canvas.style.webkitFilter = `blur(${drawBlur}px)`;
+      canvas.style.transform = 'translateZ(0)';
+      canvas.style.willChange = 'transform, filter';
+    } else {
+      canvas.style.filter = 'none';
+      canvas.style.webkitFilter = 'none';
+      canvas.style.willChange = 'auto';
+    }
 
     // Mouse tracking relative to canvas position
     const handleMouseMove = (e: MouseEvent) => {
@@ -257,8 +273,8 @@ export default function DynamicBackground() {
         }
       }
       
-      // Apply heavy blur filter
-      ctx.filter = 'blur(85px)';
+      // Desktop/modern browsers: use canvas filter. iOS Safari: CSS fallback above.
+      ctx.filter = isMobileSafari ? 'none' : `blur(${drawBlur}px)`;
       ctx.globalAlpha = 0.7;
       
       // Draw all blobs

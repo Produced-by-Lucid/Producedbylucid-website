@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function Nav() {
     const navRef = useRef<HTMLElement>(null);
@@ -36,13 +37,15 @@ export default function Nav() {
         >
             <div className="mx-auto flex w-full   items-center justify-between gap-3 px-3 py-2.5 sm:px-6 sm:py-4">
                 <div className={`overflow-hidden  transition-[width] duration-300 ease-out ${isStuck ? 'w-[96px] sm:w-[160px] md:w-[200px]' : 'w-0'}`}>
-                    <Image
-                        src="/lucid-logo.svg"
-                        alt="Logo"
-                        width={200}
-                        height={60}
-                        className="h-8 sm:h-10 md:h-12 w-auto object-center"
-                    />
+                    <Link href={'/'} >
+                        <Image
+                            src="/lucid-logo.svg"
+                            alt="Logo"
+                            width={200}
+                            height={60}
+                            className="h-8 sm:h-10 md:h-12 w-auto object-center"
+                        />
+                    </Link>
                 </div>
                 <div className="hidden sm:flex flex-1  items-center">
                     {navItems.map((item) => (

@@ -1,19 +1,34 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import FollowMouseDrag from './FollowMouseDrag';
 
-const projectCards = [
+interface ProjectCard {
+  image: string;
+  video: string;
+  company: string;
+  title: string;
+  date: string;
+  href: string;
+}
+
+interface ProjectsLinearProps {
+  cards?: ProjectCard[];
+}
+
+const projectCards: ProjectCard[] = [
   {
     image: '/projects/oscafest.png',
     video: '',
     company: 'Oscafest',
     title: "Beyond Borders 2025",
     date: '2025',
+    href: '#',
   },
    {
     image: '/projects/Busha-moonshot.jpeg',
@@ -21,6 +36,7 @@ const projectCards = [
     company: 'Busha',
     title: 'Busha, Moonshot 2025',
     date: '2025',
+    href: '#',
   },
   {
     image: '/projects/bamboo.png',
@@ -28,6 +44,7 @@ const projectCards = [
     company: 'Bamboo',
     title: 'Corporate Event Gala',
     date: '2025',
+    href: '#',
   },
   {
     image: '/projects/piggyvest.png',
@@ -35,6 +52,7 @@ const projectCards = [
     company: 'Piggyvest',
     title: 'Brand Launch Experience',
     date: '2025',
+    href: '#',
   },
  
   {
@@ -43,6 +61,7 @@ const projectCards = [
     company: 'Glovo',
     title: ' End of the year party 2025',
     date: '2025',
+    href: '#',
   },
   {
     image: '/projects/bmoni-mixer.png',
@@ -50,12 +69,13 @@ const projectCards = [
     company: 'Bmoni',
     title: 'Bmoni Mixer Lunch Party',
     date: '2025',
+    href: '#',
   },
   
   
 ];
 
-export default function ProjectsLinear() {
+export default function ProjectsLinear({ cards = projectCards }: ProjectsLinearProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const marqueeViewportRef = useRef<HTMLDivElement>(null);
   const marqueeTrackRef = useRef<HTMLDivElement>(null);
@@ -67,7 +87,7 @@ export default function ProjectsLinear() {
   const lastPointerXRef = useRef(0);
   const activePointerIdRef = useRef<number | null>(null);
 
-  const loopCards = useMemo(() => [...projectCards, ...projectCards], []);
+  const loopCards = useMemo(() => [...cards, ...cards], [cards]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -204,6 +224,10 @@ export default function ProjectsLinear() {
     setMotionSpeed(isHoveringRef.current ? 0.18 : 1, 0.65);
   };
 
+  const preventDragStart = (event: React.DragEvent) => {
+    event.preventDefault();
+  };
+
   return (
     <section id="projects" ref={sectionRef} className="relative flex min-h-[75vh] scroll-mt-24 items-center justify-center overflow-hidden  px-4 py-14  sm:min-h-[110vh] sm:pb-[20vh]">
       <div className="relative z-10 w-full ">
@@ -217,7 +241,9 @@ export default function ProjectsLinear() {
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
+          onDragStart={preventDragStart}
           className="relative w-full p-3 cursor-grab active:cursor-grabbing select-none"
+          style={{ WebkitUserDrag: 'none', userSelect: 'none', MozUserSelect: 'none' } as React.CSSProperties}
         >
           <FollowMouseDrag targetRef={marqueeViewportRef} label="view" />
 
@@ -230,30 +256,32 @@ export default function ProjectsLinear() {
                 }}
                 className="shrink-0 will-change-transform"
               >
-                <article className="projects-linear-card group w-[82vw] bg-white pt-2 px-2 shadow-5xl transition-[width,padding,box-shadow] duration-500 ease-out sm:w-[22rem] sm:hover:w-[36rem] sm:hover:p-3 sm:hover:shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
-                  
-                  <div className="relative h-[38vh] w-full overflow-hidden sm:h-[44vh]">
-                    {card.video && (
-                      <video
-                        src={`/projects/${card.video}`}
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        className="projects-linear-video pointer-events-none absolute inset-0 z-10 h-full w-full object-cover group-hover:hidden"
-                      />
-                    )}
-                    <Image src={card.image} alt={card.title} fill className="projects-linear-image pointer-events-none object-cover duration-200 group-hover:scale-120" sizes="(min-width: 1024px) 32rem, 78vw" />
-                    <Image src={'/ribbon-cut.svg'} alt={'ribbon'} width={200} height={400} className=" group-hover:translate-y-0 duration-500 ease-cubic  absolute top-0 right-0 w-10 mr-4 -translate-y-[100%]" />
-                  </div>
-                  <div className="pt-3 text-left text-gray-600 transition-all sm:opacity-0 sm:translate-y-2 sm:group-hover:h-fit sm:h-0 overflow-hidden  sm:group-hover:opacity-100">
-                    <p className="text-xs font-['Castio'] uppercase tracking-[0.2em] ">{card.company}</p>
-                    <span className="flex items-center justify-between">
-                      <p className="mt-1 text-lg  font-semibold">{card.title}</p>
-                      {card.date}
-                    </span>
-                  </div>
-                </article>
+                <Link href={card.href} className="block" draggable={false}>
+                  <article className="projects-linear-card group w-[82vw] cursor-none bg-white pt-2 px-2 shadow-5xl transition-[width,padding,box-shadow] duration-500 ease-out sm:w-88 sm:hover:w-xl sm:hover:p-3 sm:hover:shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
+                    
+                    <div className="relative h-[38vh] w-full overflow-hidden sm:h-[44vh]">
+                      {card.video && (
+                        <video
+                          src={`/projects/${card.video}`}
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                          className="projects-linear-video pointer-events-none absolute inset-0 z-10 h-full w-full object-cover group-hover:hidden"
+                        />
+                      )}
+                      <Image src={card.image} alt={card.title} fill className="projects-linear-image pointer-events-none object-cover duration-200  group-hover:scale-120" sizes="(min-width: 1024px) 32rem, 78vw" draggable={false} />
+                      <Image src={'/ribbon-cut.svg'} alt={'ribbon'} width={200} height={400} className=" group-hover:translate-y-0 duration-500  ease-cubic  absolute top-0 right-0 w-10 mr-4 -translate-y-full" draggable={false} />
+                    </div>
+                    <div className="pt-3 text-left text-gray-600 transition-all sm:opacity-0 sm:translate-y-2 sm:group-hover:h-fit sm:h-0 overflow-hidden  sm:group-hover:opacity-100">
+                      <p className="text-xs font-['Castio'] uppercase tracking-[0.2em] ">{card.company}</p>
+                      <span className="flex items-center justify-between">
+                        <p className="mt-1 text-lg  font-semibold">{card.title}</p>
+                        {card.date}
+                      </span>
+                    </div>
+                  </article>
+                </Link>
               </div>
             ))}
           </div>
