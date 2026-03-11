@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { startTransition, useEffect, useRef, useState } from 'react';
 import type { MutableRefObject, RefObject } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -332,7 +332,9 @@ export default function OurServices({ sectionRef }: OurServicesProps) {
 
     syncEdgeSpacers();
     activeIndex = 0;
-    setActiveServiceIndex(0);
+    startTransition(() => {
+      setActiveServiceIndex(0);
+    });
     alignTitleAfterPaint(0, false);
 
     const teardownScrollHijack = ENABLE_SERVICE_SCROLL_HIJACK

@@ -2,6 +2,7 @@
 
 :root {
   --color-cream: #FFE1CD;
+  --font-paragraph: "Zilla Slab", "Georgia", "Times New Roman", serif;
 }
 
 @layer base {

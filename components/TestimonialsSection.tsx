@@ -2,44 +2,7 @@
 
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
-
-const testimonials = [
-  {
-    quote:
-      "Shout out to Produced by Lucid. When we reached out to them, they took the time to truly listen to our ideas. Bringing our vision to life was intense, but they executed it flawlessly. At this year's Moonshot event, we had ample space to engage with both potential and existing customers. The booth was beautiful, all-inclusive, and mind-blowing. Visitors kept telling us it was one of the best at the event. We're truly grateful and look forward to creating more beautiful spaces together.",
-    author: 'Patience',
-    company: 'Busha Digital Limited ',
-  },
-  {
-    quote:
-      'The decor this year at Moonshot 2025 was a significant improvement from last year - absolutely impressive. What stood out most was seeing the solid minerals displayed in their physical forms, including copper and others we actively trade. It attracted a lot of engagement, with many visitors stopping to take pictures and interact with materials they had only previously seen in books or school. Thumbs up to Produced by Lucid. We would love to work together again next year.',
-    author: 'Olabisi Oyedon',
-    company: 'Head of Warehouse & Logistics Operations, Sabi ',
-  },
-  {
-    quote:
-      'Produced by Lucid handled all our event needs seamlessly. The entire process was smooth and stress-free for my team. They truly took the pressure off us and delivered beautifully. Highly recommended.',
-    author: 'Natasha',
-    company: 'Bmoni',
-  },
-  {
-    quote:
-      "After the incredible execution of our first anniversary, choosing Produced by Lucid again for our second anniversary was an easy decision. Working with Lucid gives you complete peace of mind. Peace is open, collaborative, and attentive to your ideas - but what truly stands out is the execution. You share your vision, and by the time you step into the venue, it exceeds your expectations. The team is reliable, cooperative, and incredibly helpful. It's like handing everything over and knowing it's fully covered. We look forward to many more years of collaboration.",
-    author: 'Oluwatosin Fasoro-Joseph',
-    company: 'Head of Operations, Cleva',
-  },
-  {
-    quote:
-      'Lucid did an amazing job. The way they blended the Christmas and traditional themes was beautiful. The ambience was stunning.',
-    author: 'Somto',
-    company: 'CEO & Co-founder, PiggyVest',
-  },
-  {
-    quote: 'Lucid delivers every time - amazing production, amazing visuals. I loved everything.',
-    author: 'Joshua Chibueze',
-    company: 'CMO & Co-founder, PiggyVest',
-  },
-];
+import type { HomePageContent, TestimonialEntry } from '@/lib/site-types';
 
 const heartFrames = [
   '/heart/hrt01.png',
@@ -52,7 +15,12 @@ const heartFrames = [
   '/heart/hrt08.png',
 ];
 
-export default function TestimonialsSection() {
+type TestimonialsSectionProps = {
+  heading: HomePageContent['testimonialsSection']['curvedHeading'];
+  testimonials: TestimonialEntry[];
+};
+
+export default function TestimonialsSection({ heading, testimonials }: TestimonialsSectionProps) {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [heartFrameIndex, setHeartFrameIndex] = useState(0);
   const clientsTrackRef = useRef<HTMLDivElement | null>(null);
@@ -125,7 +93,7 @@ export default function TestimonialsSection() {
                     textAnchor="middle"
                     className="testimonial-curved-text"
                   >
-                    WORDS FROM OUR CLIENTS
+                    {heading}
                   </textPath>
                 </text>
               </svg>

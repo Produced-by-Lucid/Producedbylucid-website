@@ -2,15 +2,16 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import type { NavItem, SiteSettings } from '@/lib/site-types';
 
-export default function Nav() {
+type NavProps = {
+    navItems: NavItem[];
+    cta: SiteSettings['navCta'];
+};
+
+export default function Nav({ navItems, cta }: NavProps) {
     const navRef = useRef<HTMLElement>(null);
     const [isStuck, setIsStuck] = useState(false);
-    const navItems = [
-        { label: 'Home', href: '#home' },
-        { label: 'Projects', href: '#projects' },
-        { label: 'Services', href: '#services' },
-    ];
 
     useEffect(() => {
         const updateStuckState = () => {
@@ -64,8 +65,8 @@ export default function Nav() {
                         </div>
                     ))}
                 </div>
-                <a href="#contact" className="ml-auto rounded-full border border-cream/70 bg-transparent px-3 py-2 text-xs font-medium text-cream transition-all duration-300 hover:bg-cream hover:text-white sm:ml-0 sm:px-6 sm:py-2.5 sm:text-base">
-                    Let&apos;s talk
+                <a href={cta.href} className="ml-auto rounded-full border border-cream/70 bg-transparent px-3 py-2 text-xs font-medium text-cream transition-all duration-300 hover:bg-cream hover:text-white sm:ml-0 sm:px-6 sm:py-2.5 sm:text-base">
+                    {cta.label}
                 </a>
             </div>
         </nav>

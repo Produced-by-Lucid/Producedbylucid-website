@@ -3,79 +3,17 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import type { ProjectEntry } from '@/lib/site-types';
 import FollowMouseDrag from './FollowMouseDrag';
 
-interface ProjectCard {
-  image: string;
-  video: string;
-  company: string;
-  title: string;
-  date: string;
-  href: string;
-}
-
 interface ProjectsLinearProps {
-  cards?: ProjectCard[];
+  cards: ProjectEntry[];
+  eyebrow: string;
 }
 
-const projectCards: ProjectCard[] = [
-  {
-    image: '/projects/oscafest.png',
-    video: '',
-    company: 'Oscafest',
-    title: "Beyond Borders 2025",
-    date: '2025',
-    href: '#',
-  },
-   {
-    image: '/projects/Busha-moonshot.jpeg',
-    video: '/busha.mp4',
-    company: 'Busha',
-    title: 'Busha, Moonshot 2025',
-    date: '2025',
-    href: '#',
-  },
-  {
-    image: '/projects/bamboo.png',
-    video: '',
-    company: 'Bamboo',
-    title: 'Corporate Event Gala',
-    date: '2025',
-    href: '#',
-  },
-  {
-    image: '/projects/piggyvest.png',
-    video: '',
-    company: 'Piggyvest',
-    title: 'Brand Launch Experience',
-    date: '2025',
-    href: '#',
-  },
- 
-  {
-    image: '/projects/glovo-eoy.png',
-    video: '',
-    company: 'Glovo',
-    title: ' End of the year party 2025',
-    date: '2025',
-    href: '#',
-  },
-  {
-    image: '/projects/bmoni-mixer.png',
-    video: 'bmoni.mp4',
-    company: 'Bmoni',
-    title: 'Bmoni Mixer Lunch Party',
-    date: '2025',
-    href: '#',
-  },
-  
-  
-];
-
-export default function ProjectsLinear({ cards = projectCards }: ProjectsLinearProps) {
+export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const marqueeViewportRef = useRef<HTMLDivElement>(null);
   const marqueeTrackRef = useRef<HTMLDivElement>(null);
@@ -256,13 +194,13 @@ export default function ProjectsLinear({ cards = projectCards }: ProjectsLinearP
                 }}
                 className="shrink-0 will-change-transform"
               >
-                <Link href={card.href} className="block" draggable={false}>
+                <a href={card.href || '#'} className="block" draggable={false}>
                   <article className="projects-linear-card group w-[82vw] cursor-none bg-white pt-2 px-2 shadow-5xl transition-[width,padding,box-shadow] duration-500 ease-out sm:w-88 sm:hover:w-xl sm:hover:p-3 sm:hover:shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
                     
                     <div className="relative h-[38vh] w-full overflow-hidden sm:h-[44vh]">
                       {card.video && (
                         <video
-                          src={`/projects/${card.video}`}
+                          src={card.video}
                           autoPlay
                           muted
                           loop
@@ -281,12 +219,12 @@ export default function ProjectsLinear({ cards = projectCards }: ProjectsLinearP
                       </span>
                     </div>
                   </article>
-                </Link>
+                </a>
               </div>
             ))}
           </div>
         </div>
-           <p className="section-title-text mb-8 text-center text-xs font-semibold uppercase tracking-[0.45em] text-[#1b5e3f] sm:text-sm sm:tracking-[0.8em]">Featured Projects</p>
+           <p className="section-title-text mb-8 text-center text-xs font-semibold uppercase tracking-[0.45em] text-[#1b5e3f] sm:text-sm sm:tracking-[0.8em]">{eyebrow}</p>
       </div>
     </section>
   );

@@ -1,0 +1,61 @@
+{
+  "siteName": "Produced by Lucid",
+  "siteUrl": "https://producedbylucid.com",
+  "defaultTitle": "Produced by Lucid | Event Planning & Production Agency.",
+  "titleTemplate": "%s | Produced by Lucid",
+  "description": "Produced by Lucid is an event planning and production agency creating bold, elevated experiences for brands and events.",
+  "abstract": "Event planning and production agency for elevated brand experiences.",
+  "keywords": [
+    "Produced by Lucid",
+    "event planning",
+    "event production",
+    "experiential marketing",
+    "corporate events",
+    "event design",
+    "Lagos"
+  ],
+  "creator": "Produced by Lucid",
+  "publisher": "Produced by Lucid",
+  "category": "Events",
+  "themeColor": "#174826",
+  "ogImage": "/nice-bg.png",
+  "twitterHandle": "@producedbylucid",
+  "navItems": [
+    {
+      "label": "Home",
+      "href": "#home"
+    },
+    {
+      "label": "Projects",
+      "href": "#projects"
+    },
+    {
+      "label": "Services",
+      "href": "#services"
+    }
+  ],
+  "navCta": {
+    "label": "Let's talk",
+    "href": "#contact"
+  },
+  "footerMarqueeText": "let's create a masterpiece",
+  "footerPrimaryCta": {
+    "label": "Get in touch",
+    "url": "https://calendly.com/produced_by_lucid/event-consultation"
+  },
+  "socialLinks": [
+    {
+      "label": "Instagram",
+      "url": "https://www.instagram.com/producedbylucid"
+    },
+    {
+      "label": "LinkedIn",
+      "url": "#"
+    },
+    {
+      "label": "X",
+      "url": "#"
+    }
+  ],
+  "footerCopyright": "© 2026 Produced by Lucid. All rights reserved."
+}

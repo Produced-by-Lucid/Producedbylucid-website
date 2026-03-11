@@ -16,6 +16,8 @@
 # next.js
 /.next/
 /out/
+/public/admin
+/public/lucidadmindashboard
 
 # production
 /build
@@ -35,6 +37,7 @@ yarn-error.log*
 
 # vercel
 .vercel
+.tina
 
 # typescript
 *.tsbuildinfo

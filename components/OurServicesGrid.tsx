@@ -2,46 +2,16 @@
 
 import { useState } from 'react';
 import type { RefObject } from 'react';
+import type { HomePageContent } from '@/lib/site-types';
 import DynamicBackground from './DynamicBackground';
 
 type OurServicesGridProps = {
   sectionRef?: RefObject<HTMLDivElement | null>;
+  eyebrow: string;
+  services: HomePageContent['servicesSection']['items'];
 };
 
-const services = [
-  {
-    title: 'Conceptualization & Design',
-    content:
-      'From brainstorming creative ideas to bringing your vision to life, we work closely with you to design concepts that align with your goals. We create detailed floor plans, 2D/3D visuals, to ensure every element enhances the overall experience.',
-  },
-  {
-    title: 'Event Planning & Coordination',
-    content:
-      'We handle all logistics, from venue selection to vendor coordination. Our team manages timelines, budgets, event flows, and all moving parts to ensure a smooth, stress-free planning process.',
-  },
-  {
-    title: 'Production & Execution',
-    content:
-      'Our on-site expertise ensures flawless execution, managing every detail from setup to teardown. We handle stage, lighting, sound, screens, branding, decor, catering, entertainment, and everything in between.',
-  },
-  {
-    title: 'Guest Management',
-    content:
-      'From guest lists and check-in to seating arrangements and special requests, we coordinate every detail to deliver a smooth and memorable experience for your guests.',
-  },
-  {
-    title: 'Branding & Experiential Marketing',
-    content:
-      'We elevate your brand with immersive experiences and compelling storytelling, combining strategic marketing with event design to create lasting audience engagement.',
-  },
-  {
-    title: 'Post-Event Services & Feedback',
-    content:
-      'After the event, we provide detailed reports, feedback gathering, and analysis so each future event is sharper, stronger, and even more successful.',
-  },
-];
-
-export default function OurServicesGrid({ sectionRef }: OurServicesGridProps) {
+export default function OurServicesGrid({ sectionRef, eyebrow, services }: OurServicesGridProps) {
   const [activeService, setActiveService] = useState<string | null>(null);
 
   const handleServiceTap = (title: string) => {
@@ -60,7 +30,7 @@ export default function OurServicesGrid({ sectionRef }: OurServicesGridProps) {
       <div className="mx-auto ">
         <div className="flex items-center justify-between border-b border-[#DB612D]/65 pb-4">
           <p className="text-xl  uppercase tracking-[2rem] text-[#DB612D] sm:text-xl">
-            Our Services
+            {eyebrow}
           </p>
           
           <span className="hidden items-center gap-2 text-[#DB612D] sm:flex">
