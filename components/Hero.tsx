@@ -3,22 +3,20 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import Image from 'next/image';
+import type { HomePageContent } from '@/lib/site-types';
 
 interface HeroProps {
-  mounted: boolean;
+  content: HomePageContent['hero'];
 }
 
-export default function Hero({ mounted }: HeroProps) {
+export default function Hero({ content }: HeroProps) {
   const heroRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  // second svg does not need animation, keep separate ref if needed later
   const svgStrokeRef = useRef<SVGSVGElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
-    if (!mounted) return;
-
     // Set initial states
     if (svgRef.current) {
       gsap.set(svgRef.current, { opacity: 0 });
@@ -70,15 +68,15 @@ export default function Hero({ mounted }: HeroProps) {
       }, '-=0.6');
     }
 
-  }, [mounted]);
+  }, []);
 
   return (
     <section id="home" ref={heroRef} className="relative  flex sm:min-h-[70vh] md:min-h-[65vh] w-full scroll-mt-40 min-h-[50vh] sm:pt-10  max-sm:-mb-30  flex-col items-center justify-between  px-4  py-16 sm:py-2  ">
-      {/* Main SVG with curved text and logo background */}
-      <Image src="/3d-logo.png" alt="Lucid logo" width={200} height={100} className="z-0  -mb-20 relative z-5 h-auto w-68 object-contain sm:w-68 " />
-      
-      
-      <h2 className=" sm:hidden block font-extrabold uppercase text-[#1B5E3F]! text-6xl tracking-tight  text-center mb-10  relative    ">bold ideas. <br/> elevated experience.</h2>
+      <Image src="/3d-logo.png" alt="Lucid logo" width={200} height={100} className="z-0 -mb-20 relative z-5 h-auto w-68 object-contain sm:w-68" />
+
+      <h2 className="relative mb-10 block whitespace-pre-line text-center text-6xl font-extrabold uppercase tracking-tight text-[#1B5E3F]! sm:hidden">
+        {content.mobileHeadline}
+      </h2>
       <div className="absolute inset-0 sm:-translate-y-20 -translate-y-40    min-h-[20vh] ">
 
         <div
@@ -110,7 +108,7 @@ export default function Hero({ mounted }: HeroProps) {
               fontWeight="700"
             >
               <textPath href="#curve" xlinkHref="#curve" startOffset="50%" textAnchor="middle">
-               bold ideas * elevated experiences
+                {content.curvedHeadline}
               </textPath>
             </text>
           </svg>
@@ -125,12 +123,14 @@ export default function Hero({ mounted }: HeroProps) {
         {/* Agency Description */}
         <div ref={textRef} className="max-w-xl px-4 sm:px-6">
           <p className="mb-3 text-xl font-bold text-[#1B5E3F]! sm:text-2xl md:text-3xl">
-            We are an Event Planning & Production  Agency:
+            {content.eyebrow}
           </p>
           <p className="max-w-2xl text-base leading-relaxed text-[#2a3a2a] sm:text-lg md:text-xl">
-           Creating unique event experiences for top Brands
+            {content.description}
           </p>
-          <a href="https://calendly.com/produced_by_lucid/event-consultation" className="mt-6 inline-block rounded-full bg-[#DB612D] px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#ffe8d9] hover:text-black ">Let's talk</a>
+          <a href={content.primaryCtaUrl} className="mt-6 inline-block rounded-full bg-[#DB612D] px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#ffe8d9] hover:text-black">
+            {content.primaryCtaLabel}
+          </a>
         </div>
       </div>
     </section>

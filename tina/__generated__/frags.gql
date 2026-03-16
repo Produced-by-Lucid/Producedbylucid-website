@@ -1,0 +1,127 @@
+fragment UserParts on User {
+  __typename
+  users {
+    __typename
+    username
+    name
+    email
+    password {
+      value
+      passwordChangeRequired
+    }
+  }
+}
+
+fragment SiteSettingsParts on SiteSettings {
+  __typename
+  siteName
+  siteUrl
+  defaultTitle
+  titleTemplate
+  description
+  abstract
+  keywords
+  creator
+  publisher
+  category
+  themeColor
+  ogImage
+  twitterHandle
+  navItems {
+    __typename
+    label
+    href
+  }
+  navCta {
+    __typename
+    label
+    href
+  }
+  footerMarqueeText
+  footerPrimaryCta {
+    __typename
+    label
+    url
+  }
+  socialLinks {
+    __typename
+    label
+    url
+  }
+  footerCopyright
+}
+
+fragment HomePageParts on HomePage {
+  __typename
+  hero {
+    __typename
+    mobileHeadline
+    curvedHeadline
+    eyebrow
+    description
+    primaryCtaLabel
+    primaryCtaUrl
+  }
+  featureShowcase {
+    __typename
+    headingPrefix
+    highlightWord
+    description
+    slides {
+      __typename
+      image
+      title
+    }
+  }
+  projectsSection {
+    __typename
+    eyebrow
+  }
+  servicesSection {
+    __typename
+    eyebrow
+    items {
+      __typename
+      title
+      content
+    }
+  }
+  testimonialsSection {
+    __typename
+    curvedHeading
+  }
+  blogSection {
+    __typename
+    eyebrow
+    heading
+  }
+}
+
+fragment ProjectParts on Project {
+  __typename
+  order
+  company
+  title
+  date
+  image
+  video
+  href
+}
+
+fragment TestimonialParts on Testimonial {
+  __typename
+  order
+  author
+  company
+  quote
+}
+
+fragment PostParts on Post {
+  __typename
+  title
+  excerpt
+  meta
+  coverImage
+  publishedAt
+  body
+}

@@ -2,20 +2,18 @@
 
 import React from 'react';
 import Image from 'next/image';
-
-interface Slide {
-  image: string;
-  title: string;
-}
+import type { HomePageContent } from '@/lib/site-types';
 
 interface Props {
-  slides: Slide[];
+  section: HomePageContent['featureShowcase'];
   currentSlide: number;
   setCurrentSlide: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const FeaturesSection = React.forwardRef<HTMLDivElement, Props>(
-  ({ slides, currentSlide, setCurrentSlide }, ref) => {
+  ({ section, currentSlide, setCurrentSlide }, ref) => {
+    const { slides, headingPrefix, highlightWord, description } = section;
+
     return (
       <section ref={ref} className="relative h-screen  flex items-center justify-center  px-4 sm:px-6">
         <div className="max-w-6xl flex flex-col md:flex-row gap-8 sm:gap-12 md:gap-20 lg:gap-30 relative z-10">
@@ -65,10 +63,11 @@ const FeaturesSection = React.forwardRef<HTMLDivElement, Props>(
             </div>
           </div>
           <div className="space-y-6 sm:space-y-8 md:space-y-10 text-[#174826] max-w-md">
-            <h2 className="text-3xl sm:text-4xl  md:text-5xl lg:text-6xl font-bold mb-8 sm:mb-12 md:mb-16 uppercase">we <br />
-              design for <span className="text-[#DB612D]">purpose</span></h2>
-            <p className='text-sm sm:text-base font-medium md:pr-25'>At Produced by Lucid, we bring clarity to the chaos with creativity, structure,
-              and precision—transforming bold ideas into elevated experiences.</p>
+            <h2 className="mb-8 text-3xl font-bold uppercase sm:mb-12 sm:text-4xl md:mb-16 md:text-5xl lg:text-6xl">
+              {headingPrefix.split(' ').slice(0, -2).join(' ')} <br />
+              {headingPrefix.split(' ').slice(-2).join(' ')} <span className="text-[#DB612D]">{highlightWord}</span>
+            </h2>
+            <p className='text-sm sm:text-base font-medium md:pr-25'>{description}</p>
             <div className="flex flex-col">
             </div>
           </div>
