@@ -125,11 +125,10 @@ export default function Hero({ mounted }: HeroProps) {
         {/* Agency Description */}
         <div ref={textRef} className="max-w-xl px-4 sm:px-6">
           <p className="mb-3 text-xl font-bold text-[#1B5E3F]! sm:text-2xl md:text-3xl">
-            We are an Event Planning & Production  Agency:
-          </p>
-          <p className="max-w-2xl text-base leading-relaxed text-[#2a3a2a] sm:text-lg md:text-xl">
+The experience design and event production studio for the most ambitious brands.          </p>
+          {/* <p className="max-w-2xl text-base leading-relaxed text-[#2a3a2a] sm:text-lg md:text-xl">
            Creating unique event experiences for top Brands
-          </p>
+          </p> */}
           <a href="https://calendly.com/produced_by_lucid/event-consultation" className="mt-6 inline-block rounded-full bg-[#DB612D] px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#ffe8d9] hover:text-black ">Let's talk</a>
         </div>
       </div>

@@ -1,0 +1,14 @@
+<svg width="295" height="295" viewBox="0 0 295 295" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<circle cx="163.175" cy="144.204" r="114.175" fill="url(#pattern0_1188_7059)"/>
+<circle cx="163.175" cy="144.204" r="113.175" stroke="#DB612D" stroke-width="2"/>
+<rect x="127.63" y="144.201" width="68.9357" height="150.797" fill="#DB612D"/>
+<defs>
+<pattern id="pattern0_1188_7059" patternUnits="userSpaceOnUse" patternTransform="matrix(23.7248 0 0 11.8624 49 30.0293)" preserveAspectRatio="none" viewBox="0 0 74.14 37.07" width="1" height="1">
+<use xlink:href="#pattern0_1188_7059_inner" transform="translate(0 -37.07)"/>
+<use xlink:href="#pattern0_1188_7059_inner" transform="translate(37.07 -18.535)"/>
+<g id="pattern0_1188_7059_inner">
+<rect width="11" height="11" fill="#DB612D"/>
+</g>
+<use xlink:href="#pattern0_1188_7059_inner" transform="translate(37.07 18.535)"/>
+</pattern></defs>
+</svg>
