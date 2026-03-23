@@ -178,8 +178,9 @@ export default function LandingPage({
                   <span className="mb-6 mr-10 font-bold uppercase">*</span>
                   <span className="mb-6 mr-10 font-bold uppercase">{settings.footerMarqueeText}</span>
                 </div>
-                <div className="flex shrink-0 items-center" aria-hidden="true">
-                  <span className="mb-6 mr-10 font-bold uppercase">{settings.footerMarqueeText}</span>
+              <div
+                className="flex shrink-0 items-center font-[castio]" aria-hidden="true">
+                  <span className="mb-6 mr-10 font-bold uppercase">let&apos;s create a masterpiece</span>
                   <span className="mb-6 mr-10 font-bold uppercase">*</span>
                   <span className="mb-6 mr-10 font-bold uppercase">{settings.footerMarqueeText}</span>
                   <span className="mb-6 mr-10 font-bold uppercase">*</span>
