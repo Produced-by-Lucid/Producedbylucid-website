@@ -15,22 +15,27 @@ const clientLogos = [
   { src: '/clients/sabi.png', alt: 'Sabi' },
 ];
 
-export default function ClientsMarquee() {
+type ClientsMarqueeProps = {
+  className?: string;
+};
+
+export default function ClientsMarquee({ className = '' }: ClientsMarqueeProps) {
   return (
-    <div className="mt-10 w-full max-w-4xl">
-      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-[#1B5E3F]/70 sm:text-sm">
-        Trusted by clients
+    <div className={`relative z-20 mx-auto w-full max-w-8xl px-4 py-8 ${className}`.trim()}>
+      <p className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.25em] text-[#1B5E3F]/70 sm:text-sm">
+        Trusted by 
       </p>
-      <div className="relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)]">
-        <div className="animate-scroll-x flex w-max items-center gap-8 py-2 sm:gap-12">
+      <div className="relative overflow-hidden rounded-full px-3 py-4 shadow-[0_12px_40px_rgba(27,94,63,0.08)] backdrop-blur-sm mask-[linear-gradient(to_right,transparent,black_12%,black_88%,transparent)] sm:px-5">
+        <div className="animate-scroll-x flex w-max items-center gap-12 py-2 sm:gap-12">
           {[...clientLogos, ...clientLogos].map((logo, index) => (
-            <div key={`${logo.src}-${index}`} className="relative h-9 w-[110px] shrink-0 sm:h-12 sm:w-[140px]">
+            <div key={`${logo.src}-${index}`} className="flex h-9 shrink-0 items-center sm:h-12">
               <Image
                 src={logo.src}
                 alt={logo.alt}
-                fill
+                width={140}
+                height={48}
                 sizes="(max-width: 640px) 110px, 140px"
-                className="object-contain opacity-85"
+                className="h-12 w-auto  object-contain brightness-0 opacity-90 sm:h-24 sm:max-w-64"
               />
             </div>
           ))}

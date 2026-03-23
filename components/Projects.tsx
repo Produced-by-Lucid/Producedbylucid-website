@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import gsap from 'gsap';
+import ClientsMarquee from './ClientsMarquee';
 
 const projectCards = [
   {
@@ -246,11 +247,13 @@ export default function Projects() {
       className="relative sm:min-h-[120vh] min-h-screen flex justify-center -mt-20 px-4  py-[10vh] overflow-hidden transition-[background] duration-700"
       // style={{ background: activeCard.background }}
     >
-      <div className="sm:h-[80vh]   sticky flex items-center top-15 ">
+      <div className="sm:h-[90vh]   sticky flex items-center top-15 ">
         <div className="absolute inset-0 opacity-35 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.11)_0%,_transparent_58%)]" />
         <div className="absolute inset-0 opacity-15 transition-opacity duration-500">
           <Image src={activeCard.image} alt={activeCard.title} width={1200} height={400} className="object-cover mx-auto  h-screen blur-3xl w-1/2 "  />
         </div>
+        <ClientsMarquee className="absolute bottom-0 left-1/2 mt-10 -translate-x-1/2" />
+
         <div className="relative z-10 w-full max-w-6xl flex flex-col items-center gap-10 py-20">
           <div className="text-center">
             <p className="text-sm font-semibold invert tracking-[2.35em] uppercase text-cream/70 mb-[3rem">Featured Works</p>

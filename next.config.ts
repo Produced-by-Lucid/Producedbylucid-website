@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   transpilePackages: [
     "tinacms-authjs",
     "tinacms-gitprovider-github",

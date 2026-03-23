@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import ClientsMarquee from './ClientsMarquee';
 import FeaturesSection from './FeaturesSection';
 import Hero from './Hero';
 import LandingPage from './LandingPage';
@@ -60,6 +61,10 @@ export default function HomePageClient({
 
       <SectionsInViewMotion>
         <ProjectsLinear cards={projects} eyebrow={home.projectsSection.eyebrow} />
+      </SectionsInViewMotion>
+
+      <SectionsInViewMotion>
+        <ClientsMarquee className="-mt-10 pb-14 sm:-mt-20 sm:pb-20" />
       </SectionsInViewMotion>
 
       <Nav navItems={settings.navItems} cta={settings.navCta} />

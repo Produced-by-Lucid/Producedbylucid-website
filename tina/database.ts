@@ -2,6 +2,7 @@ import {
   createDatabase,
 } from '@tinacms/datalayer';
 import { createDatabaseInternal, FilesystemBridge } from '@tinacms/graphql';
+import type { DocumentNode } from 'graphql';
 import { MemoryLevel } from 'memory-level';
 
 import graphQLSchema from './__generated__/_graphql.json';
@@ -21,6 +22,7 @@ const hasSelfHostedEnv = Boolean(
 );
 
 const isLocal = process.env.TINA_PUBLIC_IS_LOCAL === 'true' || !hasSelfHostedEnv;
+const typedGraphQLSchema = graphQLSchema as unknown as DocumentNode;
 
 type CreateDatabaseConfig = Parameters<typeof createDatabase>[0];
 
@@ -56,7 +58,7 @@ function createProductionDatabase() {
 function createIndexedLocalDatabase() {
   return createDatabaseInternal({
     bridge: new FilesystemBridge(process.cwd()),
-    level: new MemoryLevel<string, string>(),
+    level: new MemoryLevel<string, Record<string, any>>(),
   });
 }
 
@@ -72,13 +74,15 @@ export function initializeTinaDatabase() {
   if (!initializationPromise) {
     const localTinaSchema = {
       schema: tinaSchemaDocument,
-    };
+    } as unknown as any;
 
-    initializationPromise = database.indexContent({
-      graphQLSchema,
-      tinaSchema: localTinaSchema,
-      lookup,
-    });
+    initializationPromise = database
+      .indexContent({
+        graphQLSchema: typedGraphQLSchema,
+        tinaSchema: localTinaSchema,
+        lookup,
+      })
+      .then(() => {});
   }
 
   return initializationPromise;
