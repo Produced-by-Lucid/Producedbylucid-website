@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "TINA_PUBLIC_IS_LOCAL=true tinacms dev -c \"next dev\"",
+    "dev": "cross-env TINA_PUBLIC_IS_LOCAL=true tinacms dev -c \"next dev\"",
     "build": "tinacms build --skip-indexing && next build --webpack",
     "start": "next start",
     "lint": "eslint",
@@ -17,7 +17,7 @@
     "@upstash/redis": "^1.36.4",
     "gray-matter": "^4.0.3",
     "gsap": "^3.14.2",
-    "next": "16.1.6",
+    "next": "15.5.13",
     "next-auth": "^4.24.13",
     "react": "19.2.3",
     "react-dnd": "^16.0.1",
@@ -35,8 +35,9 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^7.0.3",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "15.5.13",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

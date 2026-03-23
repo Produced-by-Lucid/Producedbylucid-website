@@ -246,6 +246,7 @@ export default defineConfig({
           { type: 'string', name: 'meta', label: 'Meta label', required: true },
           { type: 'image', name: 'coverImage', label: 'Cover image', required: true },
           { type: 'datetime', name: 'publishedAt', label: 'Published at', required: true },
+          { type: 'string', name: 'link', label: 'Link' },
           { type: 'rich-text', name: 'body', label: 'Body', isBody: true, required: true },
         ],
       },

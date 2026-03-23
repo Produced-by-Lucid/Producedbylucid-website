@@ -123,5 +123,6 @@ fragment PostParts on Post {
   meta
   coverImage
   publishedAt
+  link
   body
 }

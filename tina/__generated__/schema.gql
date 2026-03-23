@@ -454,6 +454,7 @@ type Post implements Node & Document {
   meta: String!
   coverImage: String!
   publishedAt: String!
+  link: String
   body: JSON!
   id: ID!
   _sys: SystemInfo!
@@ -480,6 +481,7 @@ input PostFilter {
   meta: StringFilter
   coverImage: ImageFilter
   publishedAt: DatetimeFilter
+  link: StringFilter
   body: RichTextFilter
 }
 
@@ -668,6 +670,7 @@ input PostMutation {
   meta: String
   coverImage: String
   publishedAt: String
+  link: String
   body: JSON
 }
 

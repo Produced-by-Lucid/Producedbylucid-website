@@ -643,6 +643,7 @@ export type Post = Node & Document & {
   meta: Scalars['String']['output'];
   coverImage: Scalars['String']['output'];
   publishedAt: Scalars['String']['output'];
+  link?: Maybe<Scalars['String']['output']>;
   body: Scalars['JSON']['output'];
   id: Scalars['ID']['output'];
   _sys: SystemInfo;
@@ -669,6 +670,7 @@ export type PostFilter = {
   meta?: InputMaybe<StringFilter>;
   coverImage?: InputMaybe<ImageFilter>;
   publishedAt?: InputMaybe<DatetimeFilter>;
+  link?: InputMaybe<StringFilter>;
   body?: InputMaybe<RichTextFilter>;
 };
 
@@ -970,6 +972,7 @@ export type PostMutation = {
   meta?: InputMaybe<Scalars['String']['input']>;
   coverImage?: InputMaybe<Scalars['String']['input']>;
   publishedAt?: InputMaybe<Scalars['String']['input']>;
+  link?: InputMaybe<Scalars['String']['input']>;
   body?: InputMaybe<Scalars['JSON']['input']>;
 };
 
@@ -983,7 +986,7 @@ export type ProjectPartsFragment = { __typename: 'Project', order: number, compa
 
 export type TestimonialPartsFragment = { __typename: 'Testimonial', order: number, author: string, company: string, quote: string };
 
-export type PostPartsFragment = { __typename: 'Post', title: string, excerpt: string, meta: string, coverImage: string, publishedAt: string, body: any };
+export type PostPartsFragment = { __typename: 'Post', title: string, excerpt: string, meta: string, coverImage: string, publishedAt: string, link?: string | null, body: any };
 
 export type UserQueryVariables = Exact<{
   relativePath: Scalars['String']['input'];
@@ -1085,7 +1088,7 @@ export type PostQueryVariables = Exact<{
 }>;
 
 
-export type PostQuery = { __typename?: 'Query', post: { __typename: 'Post', id: string, title: string, excerpt: string, meta: string, coverImage: string, publishedAt: string, body: any, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string } } };
+export type PostQuery = { __typename?: 'Query', post: { __typename: 'Post', id: string, title: string, excerpt: string, meta: string, coverImage: string, publishedAt: string, link?: string | null, body: any, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string } } };
 
 export type PostConnectionQueryVariables = Exact<{
   before?: InputMaybe<Scalars['String']['input']>;
@@ -1097,7 +1100,7 @@ export type PostConnectionQueryVariables = Exact<{
 }>;
 
 
-export type PostConnectionQuery = { __typename?: 'Query', postConnection: { __typename?: 'PostConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'PostConnectionEdges', cursor: string, node?: { __typename: 'Post', id: string, title: string, excerpt: string, meta: string, coverImage: string, publishedAt: string, body: any, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string } } | null } | null> | null } };
+export type PostConnectionQuery = { __typename?: 'Query', postConnection: { __typename?: 'PostConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'PostConnectionEdges', cursor: string, node?: { __typename: 'Post', id: string, title: string, excerpt: string, meta: string, coverImage: string, publishedAt: string, link?: string | null, body: any, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string } } | null } | null> | null } };
 
 export const UserPartsFragmentDoc = gql`
     fragment UserParts on User {
@@ -1230,6 +1233,7 @@ export const PostPartsFragmentDoc = gql`
   meta
   coverImage
   publishedAt
+  link
   body
 }
     `;
