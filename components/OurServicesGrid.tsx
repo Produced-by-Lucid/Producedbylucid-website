@@ -6,50 +6,24 @@ import type { HomePageContent } from '@/lib/site-types';
 import Image from 'next/image';
 import DynamicBackground from './DynamicBackground';
 
+type ServiceItem = HomePageContent['servicesSection']['items'][number];
+
 type OurServicesGridProps = {
   sectionRef?: RefObject<HTMLDivElement | null>;
+  eyebrow: HomePageContent['servicesSection']['eyebrow'];
+  services: ServiceItem[];
 };
 
-const services = [
-  {
-    title: 'Conceptualization & Design',
-    image: '/services-img/a.svg',
-    content:
-      'From brainstorming creative ideas to bringing your vision to life, we work closely with you to design concepts that align with your goals. We create detailed floor plans, 2D/3D visuals, to ensure every element enhances the overall experience.',
-  },
-  {
-    title: 'Event Planning & Coordination',
-    image: '/services-img/b.svg',
-    content:
-      'We handle all logistics, from venue selection to vendor coordination. Our team manages timelines, budgets, event flows, and all moving parts to ensure a smooth, stress-free planning process.',
-  },
-  {
-    title: 'Production & Execution',
-    image: '/services-img/c.svg',
-    content:
-      'Our on-site expertise ensures flawless execution, managing every detail from setup to teardown. We handle stage, lighting, sound, screens, branding, decor, catering, entertainment, and everything in between.',
-  },
-  {
-    title: 'Guest Management',
-    image: '/services-img/d.svg',
-    content:
-      'From guest lists and check-in to seating arrangements and special requests, we coordinate every detail to deliver a smooth and memorable experience for your guests.',
-  },
-  {
-    title: 'Branding & Experiential Marketing',
-    image: '/services-img/e.svg',
-    content:
-      'We elevate your brand with immersive experiences and compelling storytelling, combining strategic marketing with event design to create lasting audience engagement.',
-  },
-  {
-    title: 'Post-Event Services & Feedback',
-    image: '/services-img/f.svg',
-    content:
-      'After the event, we provide detailed reports, feedback gathering, and analysis so each future event is sharper, stronger, and even more successful.',
-  },
+const serviceIllustrations = [
+  '/services-img/a.svg',
+  '/services-img/b.svg',
+  '/services-img/c.svg',
+  '/services-img/d.svg',
+  '/services-img/e.svg',
+  '/services-img/f.svg',
 ];
 
-export default function OurServicesGrid({ sectionRef }: OurServicesGridProps) {
+export default function OurServicesGrid({ sectionRef, eyebrow, services }: OurServicesGridProps) {
   const [activeService, setActiveService] = useState<string | null>(null);
 
   const handleServiceTap = (title: string) => {
@@ -83,8 +57,11 @@ export default function OurServicesGrid({ sectionRef }: OurServicesGridProps) {
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {services.map((service) => {
+          {services.map((service, index) => {
             const isActive = activeService === service.title;
+            const serviceImage =
+              serviceIllustrations[index % serviceIllustrations.length] ?? serviceIllustrations[0];
+
             return (
               <article
                 key={service.title}
@@ -119,7 +96,7 @@ export default function OurServicesGrid({ sectionRef }: OurServicesGridProps) {
                   isActive ? 'translate-y-4 opacity-0' : ''
                 }`}>
                   <Image
-                    src={service.image}
+                    src={serviceImage}
                     alt={`${service.title} icon`}
                     fill
                     sizes="(min-width: 640px) 224px, 144px"
