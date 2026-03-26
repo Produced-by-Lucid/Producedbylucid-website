@@ -71,7 +71,12 @@ npm run build
 
 This runs:
 
-- `tinacms build --skip-indexing`
+- `node scripts/tina-build.mjs`
 - `next build --webpack`
 
-`--skip-indexing` avoids a local Tina indexing hang during build, and webpack avoids a Turbopack sandbox issue in this environment.
+The Tina build script is environment-aware:
+
+- Local and fallback builds use `tinacms build --skip-indexing`
+- Self-hosted production builds run full Tina indexing so existing GitHub content is written into the Tina KV index
+
+If production skips indexing, the live Tina dashboard can load with empty collections even though the site content exists in `content/`.

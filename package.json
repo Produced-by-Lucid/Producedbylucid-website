@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "cross-env TINA_PUBLIC_IS_LOCAL=true tinacms dev -c \"next dev\"",
-    "build": "tinacms build --skip-indexing && next build",
+    "build": "node scripts/tina-build.mjs && next build",
     "start": "next start",
     "lint": "eslint",
     "setup:users": "tinacms-next-auth setup"

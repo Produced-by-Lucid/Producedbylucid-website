@@ -32,7 +32,7 @@ export default function Nav({ navItems, cta }: NavProps) {
     return (
         <nav
             ref={navRef}
-            className={`sticky left-0 right-0 top-0 z-50 mix-blend-difference transition-all duration-300 hover:bg-[#DB612D] hover:mix-blend-normal    ease-out ${
+            className={`sticky left-0 right-0 top-0 z-50 transition-all duration-300 bg-[#DB612D] hover:mix-blend-normal    ease-out ${
                 isStuck ? 'translate-y-0 opacity-100' : '-translate-y-3 opacity-0 pointer-events-none'
             }`}
         >

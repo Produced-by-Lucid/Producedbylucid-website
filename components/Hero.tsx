@@ -72,15 +72,15 @@ export default function Hero({ content }: HeroProps) {
 
   return (
     <section id="home" ref={heroRef} className="relative  flex sm:min-h-[70vh] md:min-h-[65vh] w-full scroll-mt-40 min-h-[50vh] sm:pt-10  max-sm:-mb-30  flex-col items-center justify-between  px-4  py-16 sm:py-2  ">
-      <Image src="/3d-logo.png" alt="Lucid logo" width={200} height={100} className="z-0 -mb-20 relative z-5 h-auto w-68 object-contain sm:w-68" />
+      <Image src="/pbl-round.svg" alt="Lucid logo" width={200} height={100} className="z-1 outline relative " />
 
-      <h2 className="relative mb-10 block whitespace-pre-line text-center text-6xl font-extrabold uppercase tracking-tight text-[#1B5E3F]! sm:hidden">
+      <h2 className="relative mb-10 block whitespace-pre-line text-center sm:text-8xl  text-4xl font-extrabold uppercase  text-[#1B5E3F]! ">
         {content.mobileHeadline}
       </h2>
       <div className="absolute inset-0 sm:-translate-y-20 -translate-y-40    min-h-[20vh] ">
 
         <div
-          className=" relative top-28 flex h-[52vh]  w-full items-center sm:top-24 md:top-32 lg:32 max-sm:hidden   sm:h-screen"
+          className=" relative top-28  h-[52vh] hidden w-full items-center sm:top-24 md:top-32 lg:32 max-sm:hidden   sm:h-screen"
         >
           <svg
             ref={svgRef}
@@ -125,10 +125,10 @@ export default function Hero({ content }: HeroProps) {
           <p className="mb-3 text-xl font-bold text-[#1B5E3F]! sm:text-2xl md:text-3xl">
             {content.eyebrow}
           </p>
-          <p className="max-w-2xl text-base leading-relaxed text-[#2a3a2a] sm:text-lg md:text-xl">
+          <p className="max-w-2xl text-base hidden leading-relaxed text-[#2a3a2a] sm:text-lg md:text-xl">
             {content.description}
           </p>
-          <a href={content.primaryCtaUrl} className="mt-6 inline-block rounded-full bg-[#DB612D] px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#ffe8d9] hover:text-black">
+          <a href={content.primaryCtaUrl} className="mt-6 inline-block  rounded-full bg-[#DB612D] px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#ffe8d9] hover:text-black">
             {content.primaryCtaLabel}
           </a>
         </div>

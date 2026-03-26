@@ -37,13 +37,13 @@ const FeaturesSection = React.forwardRef<HTMLDivElement, Props>(
               ))}
 
             </div>
-            <Image
+            {/* <Image
               src={'/bow.png'}
               alt="Decoration"
               width={150}
               height={150}
               className='absolute -top-6 -right-8 sm:-top-10 sm:-right-12 md:-right-20 w-20 h-20 sm:w-32 sm:h-32 md:w-36 md:h-36'
-            />
+            /> */}
 
             <div className="flex flex-row-reverse w-full justify-between items-center mt-4">
               {/* Slide Indicators */}

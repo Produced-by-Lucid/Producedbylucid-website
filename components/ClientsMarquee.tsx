@@ -21,8 +21,8 @@ type ClientsMarqueeProps = {
 
 export default function ClientsMarquee({ className = '' }: ClientsMarqueeProps) {
   return (
-    <div className={`relative z-20 mx-auto w-full max-w-8xl px-4 py-8 ${className}`.trim()}>
-      <p className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.25em] text-[#1B5E3F]/70 sm:text-sm">
+    <div className={`relative z-20 mx-auto w-full space-y-8 max-w-8xl px-4 py-8 ${className}`.trim()}>
+      <p className="sm:mb-20 text-center text-xs font-semibold mb-6  uppercase tracking-[0.25em] text-[#1B5E3F]/70 sm:text-sm">
         Trusted by 
       </p>
       <div className="relative overflow-hidden rounded-full px-3 py-4 shadow-[0_12px_40px_rgba(27,94,63,0.08)] backdrop-blur-sm mask-[linear-gradient(to_right,transparent,black_12%,black_88%,transparent)] sm:px-5">

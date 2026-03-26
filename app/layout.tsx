@@ -69,14 +69,9 @@ export async function generateMetadata(): Promise<Metadata> {
       },
     },
     icons: {
-      icon: [
-        { url: "/fav-icon.png", type: "image/png", sizes: "16x16" },
-        { url: "/fav-icon.png", type: "image/png", sizes: "32x32" },
-        { url: "/fav-icon-180.png", type: "image/png", sizes: "180x180" },
-        { url: "/favicon.ico", sizes: "any" },
-      ],
-      shortcut: [{ url: "/fav-icon.png", type: "image/png", sizes: "32x32" }],
-      apple: [{ url: "/fav-icon.png", type: "image/png", sizes: "180x180" }],
+      icon: [{ url: "/fav-icon.ico", sizes: "any" }],
+      shortcut: [{ url: "/fav-icon.ico" }],
+      apple: [{ url: "/fav-icon.ico" }],
     },
     manifest: "/site.webmanifest",
     openGraph: {

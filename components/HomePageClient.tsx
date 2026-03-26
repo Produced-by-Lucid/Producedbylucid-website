@@ -82,7 +82,7 @@ export default function HomePageClient({
           servicesSection={home.servicesSection}
           testimonialsSection={home.testimonialsSection}
           testimonials={testimonials}
-          blogSection={home.blogSection}
+          // blogSection={home.blogSection}
           posts={posts}
         />
       </div>
