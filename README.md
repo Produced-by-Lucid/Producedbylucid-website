@@ -71,6 +71,7 @@ Change this immediately after the first login.
 For production editing on Vercel, set these variables:
 
 - `NEXT_PUBLIC_SITE_URL`
+- `NEXTAUTH_URL`
 - `NEXTAUTH_SECRET`
 - `GITHUB_OWNER`
 - `GITHUB_REPO`

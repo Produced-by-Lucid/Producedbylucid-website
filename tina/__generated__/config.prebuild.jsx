@@ -2,8 +2,11 @@
 import { defineConfig, LocalAuthProvider } from "tinacms";
 import { TinaUserCollection, UsernamePasswordAuthJSProvider } from "tinacms-authjs/dist/tinacms";
 var branch = process.env.GITHUB_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || process.env.HEAD || "main";
+var hasAuthBaseUrl = Boolean(
+  process.env.NEXTAUTH_URL || process.env.NEXTAUTH_URL_INTERNAL || process.env.VERCEL_URL
+);
 var hasSelfHostedEnv = Boolean(
-  process.env.NEXTAUTH_SECRET && process.env.GITHUB_OWNER && process.env.GITHUB_REPO && process.env.GITHUB_PERSONAL_ACCESS_TOKEN && process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+  hasAuthBaseUrl && process.env.NEXTAUTH_SECRET && process.env.GITHUB_OWNER && process.env.GITHUB_REPO && process.env.GITHUB_PERSONAL_ACCESS_TOKEN && process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
 );
 var isLocal = process.env.TINA_PUBLIC_IS_LOCAL === "true" || !hasSelfHostedEnv;
 var config_default = defineConfig({

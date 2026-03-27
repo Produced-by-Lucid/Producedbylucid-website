@@ -1,7 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+const hasAuthBaseUrl = Boolean(
+  process.env.NEXTAUTH_URL || process.env.NEXTAUTH_URL_INTERNAL || process.env.VERCEL_URL
+);
+
 const hasSelfHostedEnv = Boolean(
-  process.env.NEXTAUTH_SECRET &&
+  hasAuthBaseUrl &&
+    process.env.NEXTAUTH_SECRET &&
     process.env.GITHUB_OWNER &&
     process.env.GITHUB_REPO &&
     process.env.GITHUB_PERSONAL_ACCESS_TOKEN &&
@@ -36,41 +41,54 @@ function normalizeRequestBody(req: NextApiRequest, res: NextApiResponse) {
 }
 
 export default async function tinaHandler(req: NextApiRequest, res: NextApiResponse) {
-  if (!normalizeRequestBody(req, res)) {
-    return;
-  }
+  try {
+    if (!normalizeRequestBody(req, res)) {
+      return;
+    }
 
-  const { initializeTinaDatabase } = await import('../../../tina/database');
-  await initializeTinaDatabase();
+    const { initializeTinaDatabase } = await import('../../../tina/database');
+    await initializeTinaDatabase();
 
-  const [{ TinaNodeBackend, LocalBackendAuthProvider }, { default: databaseClient }] =
-    await Promise.all([
-      import('@tinacms/datalayer'),
-      import('../../../tina/__generated__/databaseClient'),
+    const [{ TinaNodeBackend, LocalBackendAuthProvider }, { default: databaseClient }] =
+      await Promise.all([
+        import('@tinacms/datalayer'),
+        import('../../../tina/__generated__/databaseClient'),
+      ]);
+
+    if (isLocal) {
+      const handler = TinaNodeBackend({
+        authProvider: LocalBackendAuthProvider(),
+        databaseClient,
+      });
+
+      return await handler(req, res);
+    }
+
+    const [{ AuthJsBackendAuthProvider, TinaAuthJSOptions }] = await Promise.all([
+      import('tinacms-authjs'),
     ]);
 
-  if (isLocal) {
     const handler = TinaNodeBackend({
-      authProvider: LocalBackendAuthProvider(),
+      authProvider: AuthJsBackendAuthProvider({
+        authOptions: TinaAuthJSOptions({
+          databaseClient,
+          secret: process.env.NEXTAUTH_SECRET!,
+        }),
+      }),
       databaseClient,
     });
 
-    return handler(req, res);
+    return await handler(req, res);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown Tina API error';
+
+    console.error('Tina API error:', error);
+
+    if (!res.headersSent) {
+      return res.status(500).json({
+        data: null,
+        errors: [{ message }],
+      });
+    }
   }
-
-  const [{ AuthJsBackendAuthProvider, TinaAuthJSOptions }] = await Promise.all([
-    import('tinacms-authjs'),
-  ]);
-
-  const handler = TinaNodeBackend({
-    authProvider: AuthJsBackendAuthProvider({
-      authOptions: TinaAuthJSOptions({
-        databaseClient,
-        secret: process.env.NEXTAUTH_SECRET!,
-      }),
-    }),
-    databaseClient,
-  });
-
-  return handler(req, res);
 }

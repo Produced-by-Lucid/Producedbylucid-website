@@ -4,8 +4,13 @@ import { TinaUserCollection, UsernamePasswordAuthJSProvider } from 'tinacms-auth
 const branch =
   process.env.GITHUB_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || process.env.HEAD || 'main';
 
+const hasAuthBaseUrl = Boolean(
+  process.env.NEXTAUTH_URL || process.env.NEXTAUTH_URL_INTERNAL || process.env.VERCEL_URL
+);
+
 const hasSelfHostedEnv = Boolean(
-  process.env.NEXTAUTH_SECRET &&
+  hasAuthBaseUrl &&
+    process.env.NEXTAUTH_SECRET &&
     process.env.GITHUB_OWNER &&
     process.env.GITHUB_REPO &&
     process.env.GITHUB_PERSONAL_ACCESS_TOKEN &&
