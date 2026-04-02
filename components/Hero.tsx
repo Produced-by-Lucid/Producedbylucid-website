@@ -72,7 +72,7 @@ export default function Hero({ content }: HeroProps) {
 
   return (
     <section id="home" ref={heroRef} className="relative  flex sm:min-h-[70vh] md:min-h-[65vh] w-full scroll-mt-40 min-h-[50vh] sm:pt-10  max-sm:-mb-30  flex-col items-center justify-between  px-4  py-16 sm:py-2  ">
-      <Image src="/pbl-round.svg" alt="Lucid logo" width={200} height={100} className="z-1 outline relative " />
+      {/* <Image src="/pbl-round.svg" alt="Lucid logo" width={200} height={100} className="z-1 outline relative " /> */}
 
       <h2 className="relative mb-10 block whitespace-pre-line text-center sm:text-8xl  text-4xl font-extrabold uppercase  text-[#1B5E3F]! ">
         {content.mobileHeadline}
