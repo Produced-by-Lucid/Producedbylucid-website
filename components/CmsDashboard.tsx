@@ -466,7 +466,7 @@ export default function CmsDashboard() {
                   width: '100%',
                   borderRadius: 8,
                   border: 'none',
-                  background: '#0f4c81',
+                  background: '#D95B25',
                   color: '#fff',
                   padding: '0.6rem',
                   cursor: 'pointer',
