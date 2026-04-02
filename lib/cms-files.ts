@@ -82,7 +82,7 @@ async function writeEditableContentFileToGitHub(safePath: string, content: strin
 
   if (!token || !owner || !repo) {
     throw new Error(
-      'GitHub persistence is not configured. Set CMS_GITHUB_TOKEN, CMS_GITHUB_OWNER, and CMS_GITHUB_REPO.',
+      'GitHub persistence is not configured. Set CMS_GITHUB_TOKEN, CMS_GITHUB_OWNER, and CMS_GITHUB_REPO (required in production).',
     );
   }
 
@@ -130,8 +130,11 @@ async function writeEditableContentFileToGitHub(safePath: string, content: strin
 
 export async function writeEditableContentFile(relativePath: string, content: string) {
   const { absolutePath, safePath } = resolveContentPath(relativePath);
+  const isProduction = process.env.NODE_ENV === 'production';
 
-  if (process.env.CMS_GITHUB_TOKEN) {
+  if (isProduction) {
+    await writeEditableContentFileToGitHub(safePath, content);
+  } else if (process.env.CMS_GITHUB_TOKEN) {
     await writeEditableContentFileToGitHub(safePath, content);
   } else {
     await fs.writeFile(absolutePath, content, 'utf8');
