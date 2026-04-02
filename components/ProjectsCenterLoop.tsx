@@ -382,7 +382,9 @@ export default function ProjectsCenterLoop() {
   return (
     <section id="projects" ref={sectionRef} className="relative  flex min-h-screen  items-center justify-end overflow-hidden bg-white/60bg-gradient-to-t  max-sm:px-4  sm:min-h-screen ">
       <div className="relative z-10 w-full">
-        
+        <p className="section-title-text mb-10 text-center text-xs font-semibold uppercase tracking-[0.45em] text-[#1b5e3f] sm:text-sm sm:tracking-[0.8em]">
+          Featured Works
+        </p>
 
         <div className="relative mx-auto w-full ">
           {/* Controls: Previous Arrow */}
@@ -493,9 +495,7 @@ export default function ProjectsCenterLoop() {
             &rarr;
           </button> */}
         </div>
-        <p className="section-title-text mb-10 text-center text-xs font-semibold uppercase tracking-[0.45em] text-[#1b5e3f] sm:text-sm sm:tracking-[0.8em]">
-          Featured Works
-        </p>
+        
       </div>
     </section>
   );

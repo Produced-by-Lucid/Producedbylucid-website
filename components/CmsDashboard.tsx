@@ -1,37 +1,58 @@
-﻿'use client';
+'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-
-// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 
 type FileListResponse = { files: string[]; error?: string };
 type FileResponse = { path: string; content: string; error?: string };
 type JsonObject = { [key: string]: JsonValue };
 type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
-
-// â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+type SidebarTab = 'pages' | 'settings';
+type SectionDefinition = { key: string; label: string; description?: string };
 
 const PASSWORD_STORAGE_KEY = 'cms_dashboard_password';
+const HOME_PAGE_FILE = 'pages/home.json';
+const SITE_SETTINGS_FILE = 'settings/site.json';
+const BLOG_POSTS_PREFIX = 'posts/';
 
-const inputBase: React.CSSProperties = {
+const HOME_PAGE_SECTIONS: SectionDefinition[] = [
+  { key: 'hero', label: 'Hero' },
+  { key: 'projectsSection', label: 'Featured Projects' },
+  { key: 'featureShowcase', label: 'Featured showcase' },
+  { key: 'servicesSection', label: 'Services' },
+  { key: 'testimonialsSection', label: 'Testimonials' },
+  { key: 'blogSection', label: 'Blog' },
+  { key: 'footerSection', label: 'Footer' },
+];
+
+const inputBase: CSSProperties = {
   width: '100%',
-  padding: '0.5rem 0.6rem',
-  borderRadius: 7,
-  border: '1px solid #cad4de',
-  fontSize: '0.88rem',
+  padding: '0.65rem 0.75rem',
+  borderRadius: 10,
+  border: '1px solid #d5dde6',
+  fontSize: '0.9rem',
   fontFamily: 'inherit',
-  background: '#fafcfe',
+  background: '#fbfdff',
   boxSizing: 'border-box',
 };
 
-// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function formatKeyLabel(value: string) {
+  return value
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/[_-]/g, ' ')
+    .replace(/^./, (char) => char.toUpperCase())
+    .trim();
+}
 
 function fileLabel(filePath: string) {
   return filePath.split('/').pop() ?? filePath;
 }
 
-// â”€â”€ Recursive field renderer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// A single self-referential component handles all JSON value types.
+function blogLabel(filePath: string) {
+  return fileLabel(filePath)
+    .replace(/\.md$/i, '')
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
 
 function Field({
   fieldKey,
@@ -41,173 +62,182 @@ function Field({
 }: {
   fieldKey: string;
   value: JsonValue;
-  onChange: (v: JsonValue) => void;
+  onChange: (value: JsonValue) => void;
   depth?: number;
 }) {
-  // â”€â”€ string â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (typeof value === 'string') {
     const isLong = value.length > 80 || value.includes('\n');
+
     if (isLong) {
       return (
         <textarea
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(event) => onChange(event.target.value)}
           rows={Math.min(Math.max(3, value.split('\n').length + 1), 12)}
           style={{ ...inputBase, resize: 'vertical', lineHeight: 1.5 }}
         />
       );
     }
+
     return (
       <input
         type={value.startsWith('http') ? 'url' : 'text'}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(event) => onChange(event.target.value)}
         style={inputBase}
       />
     );
   }
 
-  // â”€â”€ number â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (typeof value === 'number') {
     return (
       <input
         type="number"
         value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{ ...inputBase, width: 120 }}
+        onChange={(event) => onChange(Number(event.target.value))}
+        style={{ ...inputBase, width: 140 }}
       />
     );
   }
 
-  // â”€â”€ boolean â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (typeof value === 'boolean') {
     return (
-      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+      <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer' }}>
         <input
           type="checkbox"
           checked={value}
-          onChange={(e) => onChange(e.target.checked)}
+          onChange={(event) => onChange(event.target.checked)}
           style={{ width: 16, height: 16, cursor: 'pointer' }}
         />
-        <span style={{ fontSize: '0.88rem', color: '#324454' }}>{value ? 'true' : 'false'}</span>
+        <span style={{ fontSize: '0.9rem', color: '#425466' }}>{value ? 'Enabled' : 'Disabled'}</span>
       </label>
     );
   }
 
-  // â”€â”€ array â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (Array.isArray(value)) {
-    const handleItem = (i: number, next: JsonValue) => {
-      const arr = [...value];
-      arr[i] = next;
-      onChange(arr);
+    const updateItem = (index: number, nextValue: JsonValue) => {
+      const nextArray = [...value];
+      nextArray[index] = nextValue;
+      onChange(nextArray);
     };
 
-    const removeItem = (i: number) => onChange(value.filter((_, idx) => idx !== i));
+    const removeItem = (index: number) => onChange(value.filter((_, itemIndex) => itemIndex !== index));
 
     const addItem = () => {
       const first = value[0];
-      if (first === undefined) {
+
+      if (first === undefined || typeof first === 'string') {
         onChange([...value, '']);
         return;
       }
-      if (typeof first === 'string') {
-        onChange([...value, '']);
-        return;
-      }
+
       if (typeof first === 'number') {
         onChange([...value, 0]);
         return;
       }
+
       if (typeof first === 'boolean') {
         onChange([...value, false]);
         return;
       }
+
       if (Array.isArray(first)) {
         onChange([...value, []]);
         return;
       }
+
       if (first !== null && typeof first === 'object') {
-        const blank: JsonObject = {};
-        for (const [k, v] of Object.entries(first as JsonObject)) {
-          blank[k] =
-            typeof v === 'string' ? '' : typeof v === 'number' ? 0 : typeof v === 'boolean' ? false : null;
+        const blankObject: JsonObject = {};
+        for (const [key, nestedValue] of Object.entries(first)) {
+          blankObject[key] =
+            typeof nestedValue === 'string'
+              ? ''
+              : typeof nestedValue === 'number'
+                ? 0
+                : typeof nestedValue === 'boolean'
+                  ? false
+                  : Array.isArray(nestedValue)
+                    ? []
+                    : null;
         }
-        onChange([...value, blank]);
+        onChange([...value, blankObject]);
       }
     };
 
     const hasObjectItems =
-      value.length > 0 &&
-      !Array.isArray(value[0]) &&
-      value[0] !== null &&
-      typeof value[0] === 'object';
+      value.length > 0 && !Array.isArray(value[0]) && value[0] !== null && typeof value[0] === 'object';
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-        {value.map((item, i) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        {value.map((item, index) => (
           <div
-            key={i}
+            key={`${fieldKey}-${index}`}
             style={{
-              background: '#f0f5fb',
-              borderRadius: 8,
-              padding: '0.7rem 2.2rem 0.7rem 0.8rem',
+              background: '#f4f8fc',
+              borderRadius: 12,
+              padding: '0.85rem 2.5rem 0.85rem 0.9rem',
               position: 'relative',
+              border: '1px solid #e3ebf3',
             }}
           >
-            {hasObjectItems && (
+            {hasObjectItems ? (
               <div
                 style={{
                   fontWeight: 700,
-                  fontSize: '0.75rem',
-                  color: '#4a6276',
-                  marginBottom: '0.5rem',
+                  fontSize: '0.76rem',
+                  color: '#6b7b8c',
+                  marginBottom: '0.6rem',
                   textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
+                  letterSpacing: '0.08em',
                 }}
               >
-                Item {i + 1}
+                Item {index + 1}
               </div>
-            )}
+            ) : null}
+
             <Field
-              fieldKey={`${fieldKey}[${i}]`}
+              fieldKey={`${fieldKey}[${index}]`}
               value={item}
-              onChange={(v) => handleItem(i, v)}
+              onChange={(nextValue) => updateItem(index, nextValue)}
               depth={depth + 1}
             />
+
             <button
               type="button"
-              onClick={() => removeItem(i)}
+              onClick={() => removeItem(index)}
               title="Remove item"
               style={{
                 position: 'absolute',
-                top: '0.4rem',
-                right: '0.4rem',
-                background: 'none',
-                border: 'none',
-                color: '#9f2538',
+                top: '0.55rem',
+                right: '0.55rem',
+                background: '#fff',
+                border: '1px solid #f0cfd5',
+                color: '#b73449',
                 cursor: 'pointer',
-                fontSize: '0.9rem',
+                fontSize: '0.88rem',
                 lineHeight: 1,
-                padding: '0.2rem 0.4rem',
-                borderRadius: 4,
+                padding: '0.25rem 0.45rem',
+                borderRadius: 999,
               }}
             >
-              âœ•
+              x
             </button>
           </div>
         ))}
+
         <button
           type="button"
           onClick={addItem}
           style={{
-            background: 'none',
-            border: '1px dashed #9ab4c8',
-            borderRadius: 7,
-            color: '#0f4c81',
+            background: '#fff8f3',
+            border: '1px dashed #d97f52',
+            borderRadius: 10,
+            color: '#b8582b',
             cursor: 'pointer',
-            padding: '0.4rem 0.8rem',
-            fontSize: '0.85rem',
+            padding: '0.6rem 0.85rem',
+            fontSize: '0.88rem',
             textAlign: 'left',
+            fontWeight: 600,
           }}
         >
           + Add item
@@ -216,41 +246,40 @@ function Field({
     );
   }
 
-  // â”€â”€ object â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (value !== null && typeof value === 'object') {
-    const data = value as JsonObject;
-    const handleKey = (key: string, next: JsonValue) => onChange({ ...data, [key]: next });
+    const objectValue = value as JsonObject;
 
     return (
       <div
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '0.9rem',
+          gap: '0.95rem',
           ...(depth > 0
-            ? { paddingLeft: '1rem', borderLeft: '3px solid #e0eaf5', marginTop: '0.2rem' }
+            ? { paddingLeft: '1rem', borderLeft: '3px solid #e8eef4', marginTop: '0.3rem' }
             : {}),
         }}
       >
-        {Object.entries(data).map(([key, v]) => (
+        {Object.entries(objectValue).map(([key, nestedValue]) => (
           <div key={key}>
             <label
               style={{
                 display: 'block',
                 fontWeight: 700,
                 fontSize: '0.78rem',
-                color: '#4a6276',
-                marginBottom: '0.35rem',
+                color: '#6b7b8c',
+                marginBottom: '0.38rem',
                 textTransform: 'uppercase',
-                letterSpacing: '0.05em',
+                letterSpacing: '0.08em',
               }}
             >
-              {key.replace(/([A-Z])/g, ' $1').replace(/[_-]/g, ' ').trim()}
+              {formatKeyLabel(key)}
             </label>
+
             <Field
               fieldKey={key}
-              value={v}
-              onChange={(next) => handleKey(key, next)}
+              value={nestedValue}
+              onChange={(nextValue) => onChange({ ...objectValue, [key]: nextValue })}
               depth={depth + 1}
             />
           </div>
@@ -259,28 +288,49 @@ function Field({
     );
   }
 
-  // â”€â”€ null â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  return <span style={{ color: '#aaa', fontSize: '0.85rem' }}>null</span>;
+  return <span style={{ color: '#97a4b0', fontSize: '0.88rem' }}>null</span>;
 }
 
-// â”€â”€ FormEditor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-function FormEditor({ content, onChange }: { content: string; onChange: (c: string) => void }) {
+function FormEditor({
+  content,
+  onChange,
+  topLevelSections,
+}: {
+  content: string;
+  onChange: (content: string) => void;
+  topLevelSections?: SectionDefinition[];
+}) {
   const { data, error } = useMemo(() => {
-    if (!content.trim()) return { data: {} as JsonObject, error: null };
+    if (!content.trim()) {
+      return { data: {} as JsonObject, error: null };
+    }
+
     try {
       const parsed = JSON.parse(content) as unknown;
+
       if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
-        return { data: null, error: 'Top-level JSON must be an object â€” use Code Editor.' };
+        return { data: null, error: 'Top-level JSON must be an object. Use Code Editor instead.' };
       }
+
       return { data: parsed as JsonObject, error: null };
     } catch {
-      return {
-        data: null,
-        error: 'Invalid JSON â€” switch to Code Editor to fix the syntax first.',
-      };
+      return { data: null, error: 'Invalid JSON. Switch to Code Editor to fix the syntax first.' };
     }
   }, [content]);
+
+  const sections = useMemo<SectionDefinition[]>(() => {
+    if (!data) {
+      return [];
+    }
+
+    const preferredSections = topLevelSections?.filter((section) => section.key in data) ?? [];
+    const preferredKeys = new Set(preferredSections.map((section) => section.key));
+    const remainingSections: SectionDefinition[] = Object.keys(data)
+      .filter((key) => !preferredKeys.has(key))
+      .map((key) => ({ key, label: formatKeyLabel(key) }));
+
+    return [...preferredSections, ...remainingSections];
+  }, [data, topLevelSections]);
 
   if (error || !data) {
     return (
@@ -289,9 +339,9 @@ function FormEditor({ content, onChange }: { content: string; onChange: (c: stri
           padding: '1rem',
           color: '#9f2538',
           background: '#fff6f7',
-          borderRadius: 10,
-          border: '1px solid #f5c6cb',
-          fontSize: '0.9rem',
+          borderRadius: 12,
+          border: '1px solid #f3ced5',
+          fontSize: '0.92rem',
         }}
       >
         {error}
@@ -300,15 +350,70 @@ function FormEditor({ content, onChange }: { content: string; onChange: (c: stri
   }
 
   return (
-    <Field
-      fieldKey="root"
-      value={data}
-      onChange={(next) => onChange(JSON.stringify(next, null, 2))}
-    />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      {sections.map((section) => (
+        <section
+          key={section.key}
+          data-cms-section={section.key}
+          style={{
+            background: '#fff',
+            border: '1px solid #e7edf2',
+            borderRadius: 16,
+            padding: '1rem',
+            scrollMarginTop: '1rem',
+          }}
+        >
+          <div style={{ marginBottom: '0.9rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1rem', color: '#132030' }}>{section.label}</h3>
+            {section.description ? (
+              <p style={{ margin: '0.35rem 0 0', color: '#697b8d', fontSize: '0.88rem' }}>{section.description}</p>
+            ) : null}
+          </div>
+
+          <Field
+            fieldKey={section.key}
+            value={data[section.key]}
+            onChange={(nextValue) => onChange(JSON.stringify({ ...data, [section.key]: nextValue }, null, 2))}
+          />
+        </section>
+      ))}
+    </div>
   );
 }
 
-// â”€â”€ CmsDashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function navButtonStyle(active: boolean, nested = false): CSSProperties {
+  return {
+    width: '100%',
+    textAlign: 'left',
+    border: 'none',
+    background: active ? '#f3f6fa' : 'transparent',
+    color: active ? '#142131' : '#495662',
+    borderRadius: 12,
+    padding: nested ? '0.7rem 0.75rem 0.7rem 2.1rem' : '0.8rem 0.85rem',
+    cursor: 'pointer',
+    fontSize: nested ? '0.96rem' : '1rem',
+    fontWeight: active ? 700 : 500,
+    transition: 'background 120ms ease, color 120ms ease',
+  };
+}
+
+function accordionTriggerStyle(open: boolean): CSSProperties {
+  return {
+    width: '100%',
+    border: 'none',
+    background: 'transparent',
+    textAlign: 'left',
+    padding: '0.8rem 0.85rem',
+    borderRadius: 12,
+    cursor: 'pointer',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    color: '#142131',
+    fontWeight: 600,
+    boxShadow: open ? 'inset 0 0 0 1px #e7edf2' : 'none',
+  };
+}
 
 export default function CmsDashboard() {
   const [password, setPassword] = useState('');
@@ -321,25 +426,53 @@ export default function CmsDashboard() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'form' | 'code'>('form');
+  const [activeEditorTab, setActiveEditorTab] = useState<'form' | 'code'>('form');
+  const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('pages');
+  const [homeOpen, setHomeOpen] = useState(true);
+  const [blogOpen, setBlogOpen] = useState(true);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [pendingSectionScroll, setPendingSectionScroll] = useState<string | null>(null);
+  const formScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(PASSWORD_STORAGE_KEY) ?? '';
-    setPassword(stored);
+    const storedPassword = window.localStorage.getItem(PASSWORD_STORAGE_KEY) ?? '';
+    setPassword(storedPassword);
     setPasswordReady(true);
   }, []);
 
   useEffect(() => {
-    if (!passwordReady) return;
+    if (!passwordReady) {
+      return;
+    }
+
     void loadFiles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [passwordReady]);
 
   useEffect(() => {
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      return;
+    }
+
     void loadFileContent(selectedFile);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFile]);
+
+  useEffect(() => {
+    if (!pendingSectionScroll || selectedFile !== HOME_PAGE_FILE || activeEditorTab !== 'form' || loadingContent) {
+      return;
+    }
+
+    const scrollHost = formScrollRef.current;
+    const sectionElement = scrollHost?.querySelector<HTMLElement>(`[data-cms-section="${pendingSectionScroll}"]`);
+
+    if (!scrollHost || !sectionElement) {
+      return;
+    }
+
+    sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setPendingSectionScroll(null);
+  }, [activeEditorTab, content, loadingContent, pendingSectionScroll, selectedFile]);
 
   const fileCountLabel = useMemo(
     () => (files.length === 1 ? '1 editable file' : `${files.length} editable files`),
@@ -348,20 +481,57 @@ export default function CmsDashboard() {
 
   const isMdFile = selectedFile?.endsWith('.md') ?? false;
 
+  const blogFiles = useMemo(
+    () => files.filter((filePath) => filePath.startsWith(BLOG_POSTS_PREFIX)).sort((left, right) => left.localeCompare(right)),
+    [files],
+  );
+
+  const libraryFiles = useMemo(
+    () =>
+      files.filter(
+        (filePath) =>
+          filePath !== HOME_PAGE_FILE && filePath !== SITE_SETTINGS_FILE && !filePath.startsWith(BLOG_POSTS_PREFIX),
+      ),
+    [files],
+  );
+
+  const topLevelSections = useMemo(() => {
+    if (selectedFile === HOME_PAGE_FILE) {
+      return HOME_PAGE_SECTIONS;
+    }
+
+    return undefined;
+  }, [selectedFile]);
+
   async function loadFiles() {
     setLoadingFiles(true);
     setError(null);
+
     try {
-      const res = await fetch('/api/cms/files', {
+      const response = await fetch('/api/cms/files', {
         headers: { 'x-cms-password': password },
       });
-      const body = (await res.json()) as FileListResponse;
-      if (!res.ok) throw new Error(body.error ?? 'Unable to load files.');
+      const body = (await response.json()) as FileListResponse;
+
+      if (!response.ok) {
+        throw new Error(body.error ?? 'Unable to load files.');
+      }
+
       setFiles(body.files);
-      if (!selectedFile && body.files.length > 0) setSelectedFile(body.files[0]);
-      if (selectedFile && !body.files.includes(selectedFile)) setSelectedFile(body.files[0] ?? null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to load files.');
+
+      if (!selectedFile) {
+        if (body.files.includes(HOME_PAGE_FILE)) {
+          setSelectedFile(HOME_PAGE_FILE);
+        } else {
+          setSelectedFile(body.files[0] ?? null);
+        }
+      }
+
+      if (selectedFile && !body.files.includes(selectedFile)) {
+        setSelectedFile(body.files[0] ?? null);
+      }
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Unable to load files.');
     } finally {
       setLoadingFiles(false);
     }
@@ -370,28 +540,37 @@ export default function CmsDashboard() {
   async function loadFileContent(filePath: string) {
     setLoadingContent(true);
     setError(null);
+
     try {
-      const res = await fetch(`/api/cms/files/${encodeURI(filePath)}`, {
+      const response = await fetch(`/api/cms/files/${encodeURI(filePath)}`, {
         headers: { 'x-cms-password': password },
       });
-      const body = (await res.json()) as FileResponse;
-      if (!res.ok) throw new Error(body.error ?? 'Unable to load file.');
+      const body = (await response.json()) as FileResponse;
+
+      if (!response.ok) {
+        throw new Error(body.error ?? 'Unable to load file.');
+      }
+
       setContent(body.content);
       setStatus(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to load file.');
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Unable to load file.');
     } finally {
       setLoadingContent(false);
     }
   }
 
   async function saveCurrentFile() {
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      return;
+    }
+
     setSaving(true);
     setError(null);
     setStatus(null);
+
     try {
-      const res = await fetch(`/api/cms/files/${encodeURI(selectedFile)}`, {
+      const response = await fetch(`/api/cms/files/${encodeURI(selectedFile)}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -399,177 +578,300 @@ export default function CmsDashboard() {
         },
         body: JSON.stringify({ content }),
       });
-      const body = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(body.error ?? 'Unable to save file.');
+      const body = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(body.error ?? 'Unable to save file.');
+      }
+
       setStatus(`Saved ${selectedFile} at ${new Date().toLocaleTimeString()}`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to save file.');
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Unable to save file.');
     } finally {
       setSaving(false);
     }
   }
 
-  function updatePassword(next: string) {
-    setPassword(next);
-    window.localStorage.setItem(PASSWORD_STORAGE_KEY, next);
+  function updatePassword(nextPassword: string) {
+    setPassword(nextPassword);
+    window.localStorage.setItem(PASSWORD_STORAGE_KEY, nextPassword);
+  }
+
+  function selectFile(filePath: string) {
+    setSelectedFile(filePath);
+    setPendingSectionScroll(null);
+  }
+
+  function openHomeSection(sectionKey: string) {
+    setActiveSidebarTab('pages');
+    setHomeOpen(true);
+    setActiveEditorTab('form');
+    setPendingSectionScroll(sectionKey);
+
+    if (selectedFile !== HOME_PAGE_FILE) {
+      setSelectedFile(HOME_PAGE_FILE);
+    }
   }
 
   return (
     <main
-      style={{ minHeight: '100vh', background: '#f4f6f8', color: '#122130', fontFamily: 'Georgia, serif' }}
+      style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(180deg, #fdf2e8 0%, #f6f8fb 18%, #f4f6f8 100%)',
+        color: '#122130',
+        fontFamily: 'Georgia, serif',
+      }}
     >
-      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '2rem 1rem' }}>
+      <div style={{ maxWidth: 1420, margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
         <header style={{ marginBottom: '1rem' }}>
           <h1 style={{ fontSize: '2rem', margin: 0 }}>Lucid Content Dashboard</h1>
-          <p style={{ marginTop: '0.4rem', marginBottom: 0, color: '#324454' }}>
-            Edit your content files under content/.
+          <p style={{ marginTop: '0.45rem', marginBottom: 0, color: '#556574' }}>
+            Edit your pages, blog entries, and site settings from one place.
           </p>
         </header>
 
-        <section style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '1rem' }}>
-          {/* â”€â”€ Sidebar â”€â”€ */}
+        <section style={{ display: 'grid', gridTemplateColumns: '420px 1fr', gap: '1rem', alignItems: 'start' }}>
           <aside
             style={{
-              background: '#fff',
-              borderRadius: 12,
-              border: '1px solid #d9e1e7',
+              background: 'rgba(255, 255, 255, 0.9)',
+              borderRadius: 28,
+              border: '1px solid #f0e5da',
               overflow: 'hidden',
+              boxShadow: '0 20px 50px rgba(18, 33, 48, 0.07)',
+              position: 'sticky',
+              top: '1rem',
             }}
           >
-            <div style={{ padding: '0.9rem', borderBottom: '1px solid #e7edf2' }}>
-              <label
-                htmlFor="cms-password"
-                style={{ display: 'block', fontWeight: 600, marginBottom: '0.4rem' }}
-              >
+            <div style={{ padding: '1.1rem 1.1rem 0.95rem', borderBottom: '1px solid #eceff3' }}>
+              <div style={{ display: 'inline-flex', gap: '0.45rem', padding: '0.25rem', background: '#f3f4f6', borderRadius: 999 }}>
+                <button
+                  type="button"
+                  onClick={() => setActiveSidebarTab('pages')}
+                  style={{
+                    border: 'none',
+                    background: activeSidebarTab === 'pages' ? '#de692e' : 'transparent',
+                    color: activeSidebarTab === 'pages' ? '#fff' : '#172331',
+                    borderRadius: 999,
+                    padding: '0.7rem 1.05rem',
+                    cursor: 'pointer',
+                    fontSize: '0.98rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  Pages
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveSidebarTab('settings')}
+                  style={{
+                    border: 'none',
+                    background: activeSidebarTab === 'settings' ? '#de692e' : 'transparent',
+                    color: activeSidebarTab === 'settings' ? '#fff' : '#172331',
+                    borderRadius: 999,
+                    padding: '0.7rem 1.05rem',
+                    cursor: 'pointer',
+                    fontSize: '0.98rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  Site settings
+                </button>
+              </div>
+            </div>
+
+            <div style={{ padding: '1rem 1.1rem 1.25rem' }}>
+              {activeSidebarTab === 'pages' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div>
+                    <button type="button" onClick={() => setHomeOpen((current) => !current)} style={accordionTriggerStyle(homeOpen)}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span style={{ fontSize: '1rem' }}>⌂</span>
+                        <span>Home page</span>
+                      </span>
+                      <span style={{ color: '#7a8794' }}>{homeOpen ? '-' : '+'}</span>
+                    </button>
+
+                    {homeOpen ? (
+                      <div style={{ marginTop: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                        {HOME_PAGE_SECTIONS.map((section) => (
+                          <button
+                            key={section.key}
+                            type="button"
+                            onClick={() => openHomeSection(section.key)}
+                            style={navButtonStyle(selectedFile === HOME_PAGE_FILE, true)}
+                          >
+                            {section.label}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div style={{ paddingTop: '0.5rem', borderTop: '1px solid #eceff3' }}>
+                    <button type="button" onClick={() => setBlogOpen((current) => !current)} style={accordionTriggerStyle(blogOpen)}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span style={{ fontSize: '0.95rem' }}>▣</span>
+                        <span>Blog</span>
+                      </span>
+                      <span style={{ color: '#7a8794' }}>{blogOpen ? '-' : '+'}</span>
+                    </button>
+
+                    {blogOpen ? (
+                      <div style={{ marginTop: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                        {blogFiles.map((filePath) => (
+                          <button
+                            key={filePath}
+                            type="button"
+                            onClick={() => selectFile(filePath)}
+                            style={navButtonStyle(selectedFile === filePath, true)}
+                            title={filePath}
+                          >
+                            {blogLabel(filePath)}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {libraryFiles.length > 0 ? (
+                    <div style={{ paddingTop: '0.5rem', borderTop: '1px solid #eceff3' }}>
+                      <button type="button" onClick={() => setLibraryOpen((current) => !current)} style={accordionTriggerStyle(libraryOpen)}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <span style={{ fontSize: '0.95rem' }}>⋯</span>
+                          <span>Content library</span>
+                        </span>
+                        <span style={{ color: '#7a8794' }}>{libraryOpen ? '-' : '+'}</span>
+                      </button>
+
+                      {libraryOpen ? (
+                        <div style={{ marginTop: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                          {libraryFiles.map((filePath) => (
+                            <button
+                              key={filePath}
+                              type="button"
+                              onClick={() => selectFile(filePath)}
+                              style={navButtonStyle(selectedFile === filePath, true)}
+                              title={filePath}
+                            >
+                              {fileLabel(filePath)}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => selectFile(SITE_SETTINGS_FILE)}
+                    style={navButtonStyle(selectedFile === SITE_SETTINGS_FILE)}
+                  >
+                    Site settings
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div style={{ padding: '1rem 1.1rem 1.2rem', borderTop: '1px solid #eceff3', background: '#fcfcfd' }}>
+              <label htmlFor="cms-password" style={{ display: 'block', fontWeight: 600, marginBottom: '0.45rem' }}>
                 Dashboard Password
               </label>
-              
               <input
                 id="cms-password"
                 type="password"
                 value={password}
-                onChange={(e) => updatePassword(e.target.value)}
+                onChange={(event) => updatePassword(event.target.value)}
                 placeholder="Leave blank if disabled"
-                style={{
-                  width: '100%',
-                  padding: '0.6rem 0.7rem',
-                  borderRadius: 8,
-                  border: '1px solid #cad4de',
-                  boxSizing: 'border-box',
-                }}
+                style={inputBase}
               />
+
               <button
                 type="button"
                 onClick={() => void loadFiles()}
                 disabled={loadingFiles}
                 style={{
-                  marginTop: '0.6rem',
+                  marginTop: '0.7rem',
                   width: '100%',
-                  borderRadius: 8,
+                  borderRadius: 12,
                   border: 'none',
-                  background: '#D95B25',
+                  background: '#de692e',
                   color: '#fff',
-                  padding: '0.6rem',
+                  padding: '0.75rem 0.9rem',
                   cursor: 'pointer',
+                  fontWeight: 600,
                 }}
               >
-                {loadingFiles ? 'Loadingâ€¦' : 'Reload Files'}
+                {loadingFiles ? 'Loading...' : 'Reload Files'}
               </button>
-              <p style={{ marginTop: '0.6rem', marginBottom: 0, color: '#4a6276', fontSize: '0.9rem' }}>
-                {fileCountLabel}
-              </p>
-            </div>
 
-            <div style={{ maxHeight: '65vh', overflowY: 'auto' }}>
-              {files.map((filePath) => {
-                const active = filePath === selectedFile;
-                return (
-                  <button
-                    key={filePath}
-                    type="button"
-                    onClick={() => setSelectedFile(filePath)}
-                    style={{
-                      width: '100%',
-                      textAlign: 'left',
-                      border: 'none',
-                      borderBottom: '1px solid #eff3f7',
-                      background: active ? '#e7f1fb' : '#fff',
-                      padding: '0.7rem 0.8rem',
-                      cursor: 'pointer',
-                    }}
-                    title={filePath}
-                  >
-                    <div style={{ fontWeight: 600, color: '#102030' }}>{fileLabel(filePath)}</div>
-                    <div style={{ fontSize: '0.8rem', color: '#4a6276', marginTop: '0.2rem' }}>
-                      {filePath}
-                    </div>
-                  </button>
-                );
-              })}
+              <p style={{ marginTop: '0.7rem', marginBottom: 0, color: '#6c7b89', fontSize: '0.9rem' }}>{fileCountLabel}</p>
             </div>
           </aside>
 
-          {/* â”€â”€ Editor panel â”€â”€ */}
           <section
             style={{
               background: '#fff',
-              borderRadius: 12,
-              border: '1px solid #d9e1e7',
+              borderRadius: 24,
+              border: '1px solid #e6ebf0',
               padding: '1rem',
+              boxShadow: '0 16px 40px rgba(18, 33, 48, 0.05)',
             }}
           >
-            {/* Header row */}
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                gap: '0.8rem',
-                marginBottom: '0.75rem',
+                gap: '1rem',
+                marginBottom: '0.85rem',
               }}
             >
-              <strong style={{ color: '#102030' }}>{selectedFile ?? 'No file selected'}</strong>
+              <div>
+                <strong style={{ color: '#132030', fontSize: '1rem' }}>{selectedFile ?? 'No file selected'}</strong>
+                <p style={{ margin: '0.3rem 0 0', color: '#6c7b89', fontSize: '0.9rem' }}>
+                  {selectedFile === HOME_PAGE_FILE
+                    ? 'Choose a section in the sidebar to jump directly to that part of the home page.'
+                    : 'Edit content and save changes when you are ready.'}
+                </p>
+              </div>
+
               <button
                 type="button"
                 onClick={() => void saveCurrentFile()}
                 disabled={!selectedFile || loadingContent || saving}
                 style={{
-                  borderRadius: 8,
+                  borderRadius: 12,
                   border: 'none',
-                  background: '#16784f',
+                  background: '#1f7a52',
                   color: '#fff',
-                  padding: '0.6rem 1rem',
+                  padding: '0.75rem 1rem',
                   cursor: 'pointer',
-                  fontWeight: 600,
+                  fontWeight: 700,
+                  minWidth: 150,
                 }}
               >
-                {saving ? 'Savingâ€¦' : 'Save Changes'}
+                {saving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
 
-            {/* Tab bar â€” JSON files only, hidden for markdown */}
-            {!isMdFile && selectedFile && (
-              <div
-                style={{
-                  display: 'flex',
-                  borderBottom: '1px solid #d9e1e7',
-                  marginBottom: '1rem',
-                }}
-              >
+            {!isMdFile && selectedFile ? (
+              <div style={{ display: 'flex', borderBottom: '1px solid #d9e1e7', marginBottom: '1rem' }}>
                 {(['form', 'code'] as const).map((tab) => (
                   <button
                     key={tab}
                     type="button"
-                    onClick={() => setActiveTab(tab)}
+                    onClick={() => setActiveEditorTab(tab)}
                     style={{
                       border: 'none',
-                      borderBottom: activeTab === tab ? '2px solid #0f4c81' : '2px solid transparent',
+                      borderBottom: activeEditorTab === tab ? '2px solid #de692e' : '2px solid transparent',
                       background: 'none',
-                      padding: '0.5rem 1.2rem',
-                      fontWeight: activeTab === tab ? 700 : 400,
-                      color: activeTab === tab ? '#0f4c81' : '#4a6276',
+                      padding: '0.65rem 1.15rem',
+                      fontWeight: activeEditorTab === tab ? 700 : 500,
+                      color: activeEditorTab === tab ? '#de692e' : '#566575',
                       cursor: 'pointer',
-                      fontSize: '0.9rem',
+                      fontSize: '0.92rem',
                       marginBottom: '-1px',
                     }}
                   >
@@ -577,38 +879,37 @@ export default function CmsDashboard() {
                   </button>
                 ))}
               </div>
-            )}
+            ) : null}
 
-            {/* Editor content */}
             {loadingContent ? (
-              <p style={{ color: '#4a6276', padding: '1rem 0' }}>Loadingâ€¦</p>
-            ) : isMdFile || activeTab === 'code' ? (
+              <p style={{ color: '#4a6276', padding: '1rem 0' }}>Loading...</p>
+            ) : isMdFile || activeEditorTab === 'code' ? (
               <textarea
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={(event) => setContent(event.target.value)}
                 spellCheck={false}
                 disabled={loadingContent || !selectedFile}
                 style={{
                   width: '100%',
-                  minHeight: '70vh',
-                  borderRadius: 10,
+                  minHeight: '72vh',
+                  borderRadius: 14,
                   border: '1px solid #cad4de',
-                  padding: '0.9rem',
+                  padding: '1rem',
                   fontFamily: 'Consolas, Monaco, monospace',
                   fontSize: '0.92rem',
-                  lineHeight: 1.4,
+                  lineHeight: 1.5,
                   background: '#fcfdff',
                   boxSizing: 'border-box',
                 }}
               />
             ) : (
-              <div style={{ maxHeight: '72vh', overflowY: 'auto', padding: '0.25rem 0.5rem 1rem' }}>
-                <FormEditor content={content} onChange={setContent} />
+              <div ref={formScrollRef} style={{ maxHeight: '74vh', overflowY: 'auto', padding: '0.25rem 0.1rem 1rem' }}>
+                <FormEditor content={content} onChange={setContent} topLevelSections={topLevelSections} />
               </div>
             )}
 
-            {error && <p style={{ color: '#9f2538', margin: '0.75rem 0 0' }}>{error}</p>}
-            {status && <p style={{ color: '#16784f', margin: '0.75rem 0 0' }}>{status}</p>}
+            {error ? <p style={{ color: '#9f2538', margin: '0.85rem 0 0' }}>{error}</p> : null}
+            {status ? <p style={{ color: '#16784f', margin: '0.85rem 0 0' }}>{status}</p> : null}
           </section>
         </section>
       </div>

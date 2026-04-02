@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import Image from 'next/image';
 import type { HomePageContent } from '@/lib/site-types';
+import HeroCurvedHeadline from '@/components/HeroCurvedHeadline';
 
 interface HeroProps {
   content: HomePageContent['hero'];
@@ -71,49 +71,14 @@ export default function Hero({ content }: HeroProps) {
   }, []);
 
   return (
-    <section id="home" ref={heroRef} className="relative  flex sm:min-h-[70vh] md:min-h-[65vh] w-full scroll-mt-40 min-h-[50vh] sm:pt-10  max-sm:-mb-30  flex-col items-center justify-between  px-4  py-16 sm:py-2  ">
+    <section id="home" ref={heroRef} className="relative  flex sm:min-h-[70vh] md:min-h-[65vh]  w-full scroll-mt-40 min-h-[50vh] sm:pt-20  max-sm:-mb-30  flex-col items-center justify-between  px-4  py-16 sm:py-24  ">
       {/* <Image src="/pbl-round.svg" alt="Lucid logo" width={200} height={100} className="z-1 outline relative " /> */}
 
-      <h2 className="relative mb-10 block whitespace-pre-line text-center sm:text-8xl  text-4xl font-extrabold uppercase  text-[#1B5E3F]! ">
+      <h2 className="relative mb-10 block whitespace-pre-line text-center sm:text-8xl  text-4xl font-extrabold uppercase   text-[#1B5E3F]! ">
         {content.mobileHeadline}
       </h2>
       <div className="absolute inset-0 sm:-translate-y-20 -translate-y-40    min-h-[20vh] ">
-
-        <div
-          className=" relative top-28  h-[52vh] hidden w-full items-center sm:top-24 md:top-32 lg:32 max-sm:hidden   sm:h-screen"
-        >
-          <svg
-            ref={svgRef}
-            viewBox="0 0 1200 850"
-            className="absolute left-0  w-full scale-140 sm:top-14 sm:h-screen sm:scale-110"
-            xmlns="http://www.w3.org/2000/svg"
-            xmlnsXlink="http://www.w3.org/1999/xlink"
-            preserveAspectRatio="xMidYMid slice"
-          >
-            <defs>
-              {/* Explicit path arc is more reliable than ellipse refs in some browsers. */}
-              <path
-                id="curve"
-                d="M 100 560 A 500 320 0 0 1 1100 560"
-                fill="none"
-              />
-            </defs>
-        
-            {/* Curved text - BOLD IDEAS * ELEVATE */}
-            <text
-              className="font-bold uppercase fill-[#1B5E3F]"
-              fontSize="56"
-              fontFamily="var(--font-display), sans-serif"
-              letterSpacing="1"
-              fontWeight="700"
-            >
-              <textPath href="#curve" xlinkHref="#curve" startOffset="50%" textAnchor="middle">
-                {content.curvedHeadline}
-              </textPath>
-            </text>
-          </svg>
-        
-        </div>
+        <HeroCurvedHeadline svgRef={svgRef} curvedHeadline={content.curvedHeadline} />
       </div>
 
       {/* Center Logo and Text Content */}

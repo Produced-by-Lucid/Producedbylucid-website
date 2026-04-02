@@ -1,4 +1,4 @@
-import CmsDashboard from '@/components/CmsDashboard';
+import CmsDashboard from '../../components/CmsDashboard';
 
 export const metadata = {
   title: 'Content Dashboard',
