@@ -74,6 +74,22 @@ export async function readEditableContentFile(relativePath: string) {
   return { path: safePath, content };
 }
 
+function formatGitHubPersistenceError(status: number, message: string, owner: string, repo: string) {
+  if (status === 403 && message.includes('Resource not accessible by personal access token')) {
+    return `GitHub token cannot access ${owner}/${repo}. For org repos, create a fine-grained token with Contents: Read and write, set Resource owner to ${owner}, grant repository access to ${repo}, and complete org approval/SSO authorization if required.`;
+  }
+
+  if (status === 401) {
+    return 'GitHub token is invalid or expired. Rotate CMS_GITHUB_TOKEN and redeploy.';
+  }
+
+  if (status === 404) {
+    return `GitHub path or repository was not found. Verify CMS_GITHUB_OWNER, CMS_GITHUB_REPO, and CMS_GITHUB_BRANCH for ${owner}/${repo}.`;
+  }
+
+  return `${message} (GitHub API ${status})`;
+}
+
 async function writeEditableContentFileToGitHub(safePath: string, content: string): Promise<void> {
   const token = process.env.CMS_GITHUB_TOKEN;
   const owner = process.env.CMS_GITHUB_OWNER;
@@ -81,8 +97,13 @@ async function writeEditableContentFileToGitHub(safePath: string, content: strin
   const branch = process.env.CMS_GITHUB_BRANCH ?? 'main';
 
   if (!token || !owner || !repo) {
+    const missing: string[] = [];
+    if (!token) missing.push('CMS_GITHUB_TOKEN');
+    if (!owner) missing.push('CMS_GITHUB_OWNER');
+    if (!repo) missing.push('CMS_GITHUB_REPO');
+
     throw new Error(
-      'GitHub persistence is not configured. Set CMS_GITHUB_TOKEN, CMS_GITHUB_OWNER, and CMS_GITHUB_REPO (required in production).',
+      `GitHub persistence is not configured. Missing: ${missing.join(', ')}. Required in production.`,
     );
   }
 
@@ -103,6 +124,10 @@ async function writeEditableContentFileToGitHub(safePath: string, content: strin
   if (getResponse.ok) {
     const fileData = (await getResponse.json()) as { sha?: string };
     sha = fileData.sha;
+  } else if (getResponse.status !== 404) {
+    const errorData = (await getResponse.json().catch(() => ({}))) as { message?: string };
+    const message = errorData.message ?? 'Unable to access file metadata on GitHub.';
+    throw new Error(formatGitHubPersistenceError(getResponse.status, message, owner, repo));
   }
 
   // Step 2 — commit the new content
@@ -124,7 +149,8 @@ async function writeEditableContentFileToGitHub(safePath: string, content: strin
 
   if (!putResponse.ok) {
     const errorData = (await putResponse.json().catch(() => ({}))) as { message?: string };
-    throw new Error(errorData.message ?? `GitHub API returned ${putResponse.status}`);
+    const message = errorData.message ?? 'Unable to persist file to GitHub.';
+    throw new Error(formatGitHubPersistenceError(putResponse.status, message, owner, repo));
   }
 }
 
