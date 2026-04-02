@@ -29,6 +29,7 @@ export default function Nav({ navItems, cta }: NavProps) {
         };
     }, []);
 
+    
     return (
         <nav
             ref={navRef}
