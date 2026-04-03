@@ -2,19 +2,19 @@
   "hero": {
     "mobileHeadline": "Bold ideas.\nElevated experiences.",
     "curvedHeadline": "bold ideas. elevated experiences",
-    "eyebrow": "We are an event planning & production agency Creating unique event experiences for top Brands",
-    "description": "Creating unique event experiences for top Brands",
+    "eyebrow": "Experience Design Comapny ",
+    "description": "For the Coolest Brands",
     "primaryCtaLabel": "Let's talk ",
     "primaryCtaUrl": "https://calendly.com/produced_by_lucid/event-consultation"
   },
   "featureShowcase": {
-    "headingPrefix": "we design for",
-    "highlightWord": "purpose",
-    "description": "At Produced by Lucid, we bring clarity to the chaos with creativity, structure, and precision-transforming bold ideas into elevated experiences.",
+    "headingPrefix": "No Grey Areas.",
+    "highlightWord": " Just Lucid Experiences.",
+    "description": "With clarity, creativity, and precision at our core, we transform bold ideas into elevated experiences.\n",
     "slides": [
       {
         "image": "/slider-imgs/pr-img-1.png",
-        "title": "Sir Allan's 70th Birthday"
+        "title": ""
       },
       {
         "image": "/slider-imgs/pr-img-2.png",
@@ -45,21 +45,13 @@
         "content": "Our on-site expertise ensures flawless execution, managing every detail from setup to teardown. We handle stage, lighting, sound, screens, branding, decor, catering, entertainment, and everything in between."
       },
       {
-        "title": "Guest Management",
-        "content": "From guest lists and check-in to seating arrangements and special requests, we coordinate every detail to deliver a smooth and memorable experience for your guests."
-      },
-      {
         "title": "Branding & Experiential Marketing",
         "content": "We elevate your brand with immersive experiences and compelling storytelling, combining strategic marketing with event design to create lasting audience engagement."
-      },
-      {
-        "title": "Post-Event Services & Feedback",
-        "content": "After the event, we provide detailed reports, feedback gathering, and analysis so each future event is sharper, stronger, and even more successful."
       }
     ]
   },
   "testimonialsSection": {
-    "curvedHeading": "WORDS FROM OUR CLIENTS"
+    "curvedHeading": "OUR CLIENTS ONCE SAID"
   },
   "blogSection": {
     "eyebrow": "Blog Posts",
