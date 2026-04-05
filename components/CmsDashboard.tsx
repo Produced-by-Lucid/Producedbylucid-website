@@ -9,7 +9,6 @@ type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
 type SidebarTab = 'pages' | 'settings';
 type SectionDefinition = { key: string; label: string; description?: string };
 
-const PASSWORD_STORAGE_KEY = 'cms_dashboard_password';
 const HOME_PAGE_FILE = 'pages/home.json';
 const SITE_SETTINGS_FILE = 'settings/site.json';
 const BLOG_POSTS_PREFIX = 'posts/';
@@ -415,9 +414,8 @@ function accordionTriggerStyle(open: boolean): CSSProperties {
   };
 }
 
-export default function CmsDashboard() {
-  const [password, setPassword] = useState('');
-  const [passwordReady, setPasswordReady] = useState(false);
+export default function CmsDashboard({ initialPassword }: { initialPassword: string }) {
+  const [password] = useState(initialPassword);
   const [files, setFiles] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [content, setContent] = useState('');
@@ -435,19 +433,9 @@ export default function CmsDashboard() {
   const formScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const storedPassword = window.localStorage.getItem(PASSWORD_STORAGE_KEY) ?? '';
-    setPassword(storedPassword);
-    setPasswordReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!passwordReady) {
-      return;
-    }
-
     void loadFiles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [passwordReady]);
+  }, []);
 
   useEffect(() => {
     if (!selectedFile) {
@@ -590,11 +578,6 @@ export default function CmsDashboard() {
     } finally {
       setSaving(false);
     }
-  }
-
-  function updatePassword(nextPassword: string) {
-    setPassword(nextPassword);
-    window.localStorage.setItem(PASSWORD_STORAGE_KEY, nextPassword);
   }
 
   function selectFile(filePath: string) {
@@ -775,24 +758,11 @@ export default function CmsDashboard() {
             </div>
 
             <div style={{ padding: '1rem 1.1rem 1.2rem', borderTop: '1px solid #eceff3', background: '#fcfcfd' }}>
-              <label htmlFor="cms-password" style={{ display: 'block', fontWeight: 600, marginBottom: '0.45rem' }}>
-                Dashboard Password
-              </label>
-              <input
-                id="cms-password"
-                type="password"
-                value={password}
-                onChange={(event) => updatePassword(event.target.value)}
-                placeholder="Leave blank if disabled"
-                style={inputBase}
-              />
-
               <button
                 type="button"
                 onClick={() => void loadFiles()}
                 disabled={loadingFiles}
                 style={{
-                  marginTop: '0.7rem',
                   width: '100%',
                   borderRadius: 12,
                   border: 'none',
@@ -807,6 +777,28 @@ export default function CmsDashboard() {
               </button>
 
               <p style={{ marginTop: '0.7rem', marginBottom: 0, color: '#6c7b89', fontSize: '0.9rem' }}>{fileCountLabel}</p>
+
+              <button
+                type="button"
+                onClick={() => {
+                  window.localStorage.removeItem('cms_dashboard_password');
+                  window.location.reload();
+                }}
+                style={{
+                  marginTop: '0.7rem',
+                  width: '100%',
+                  borderRadius: 12,
+                  border: '1px solid #d5dde6',
+                  background: 'transparent',
+                  color: '#556574',
+                  padding: '0.65rem 0.9rem',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                }}
+              >
+                Sign Out
+              </button>
             </div>
           </aside>
 
