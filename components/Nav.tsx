@@ -29,6 +29,7 @@ export default function Nav({ navItems, cta }: NavProps) {
         };
     }, []);
 
+
     
     return (
         <nav
@@ -49,6 +50,7 @@ export default function Nav({ navItems, cta }: NavProps) {
                         />
                     </Link>
                 </div>
+                
                 <div className="hidden sm:flex flex-1  items-center">
                     {navItems.map((item) => (
                         <div key={item.href} className="flex flex-1 justify-center gap-[2rem] items-center">
