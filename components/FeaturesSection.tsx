@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import type { HomePageContent } from '@/lib/site-types';
 
@@ -13,6 +13,16 @@ interface Props {
 const FeaturesSection = React.forwardRef<HTMLDivElement, Props>(
   ({ section, currentSlide, setCurrentSlide }, ref) => {
     const { slides, headingPrefix, highlightWord, description } = section;
+
+    // Auto-advance slides every 4 seconds
+    const nextSlide = useCallback(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, [slides.length, setCurrentSlide]);
+
+    useEffect(() => {
+      const timer = setInterval(nextSlide, 4000);
+      return () => clearInterval(timer);
+    }, [nextSlide]);
 
     return (
       <section ref={ref} className="relative h-screen  flex items-center justify-center  px-4 sm:px-6">
@@ -28,10 +38,11 @@ const FeaturesSection = React.forwardRef<HTMLDivElement, Props>(
                 >
                   <Image
                     src={slide.image}
-                    alt={slide.title}
+                    alt={slide.title || 'Slide'}
                     width={500}
                     height={500}
-                    className="object-cover h-full "
+                    className="object-cover h-full"
+                    unoptimized
                   />
                 </div>
               ))}
@@ -59,13 +70,13 @@ const FeaturesSection = React.forwardRef<HTMLDivElement, Props>(
                 ))}
               </div>
               {/* Title */}
-              <p className="text-center">{slides[currentSlide].title}</p>
+              <p className="text-center text-black">{slides[currentSlide].title}</p>
             </div>
           </div>
-          <div className="space-y-6 sm:space-y-8 md:space-y-10 text-[#174826] max-w-md">
+          <div className="space-y-6 sm:space-y-8 md:space-y-10 text-[#154122] max-w-md">
             <h2 className="mb-8 text-3xl font-bold uppercase sm:mb-12 sm:text-4xl md:mb-16 md:text-5xl lg:text-6xl">
-              {headingPrefix.split(' ').slice(0, -2).join(' ')} <br />
-              {headingPrefix.split(' ').slice(-2).join(' ')} <span className="text-[#DB612D]">{highlightWord}</span>
+              {headingPrefix.split(' ').slice(0, -2).join(' ')} <span className="w-2"></span>
+              {headingPrefix.split(' ').slice(-2).join(' ')} <br /> <span className="text-[#DB612D]">{highlightWord}</span>
             </h2>
             <p className='text-sm sm:text-base font-medium md:pr-25'>{description}</p>
             <div className="flex flex-col">

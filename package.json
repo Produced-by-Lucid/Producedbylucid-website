@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@fontsource-variable/instrument-sans": "^5.2.8",
     "@fontsource/zilla-slab": "^5.2.8",
     "@studio-freight/lenis": "^1.0.42",
     "gray-matter": "^4.0.3",

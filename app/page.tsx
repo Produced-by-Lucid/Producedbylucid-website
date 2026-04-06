@@ -7,6 +7,9 @@ import {
   getTestimonials,
 } from '@/lib/site-content';
 
+// Always re-read content files from disk so CMS edits are reflected immediately
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const [home, settings, projects, testimonials, posts] = await Promise.all([
     getHomePageContent(),

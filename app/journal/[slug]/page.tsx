@@ -5,6 +5,9 @@ import { notFound } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { getPostBySlug, getPosts, getSiteSettings } from '@/lib/site-content';
 
+// Always re-read content files from disk so CMS edits are reflected immediately
+export const dynamic = 'force-dynamic';
+
 type JournalPostPageProps = {
   params: Promise<{
     slug: string;

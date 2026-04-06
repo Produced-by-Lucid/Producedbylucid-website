@@ -156,14 +156,13 @@ async function writeEditableContentFileToGitHub(safePath: string, content: strin
 
 export async function writeEditableContentFile(relativePath: string, content: string) {
   const { absolutePath, safePath } = resolveContentPath(relativePath);
-  const isProduction = process.env.NODE_ENV === 'production';
 
-  if (isProduction) {
-    await writeEditableContentFileToGitHub(safePath, content);
-  } else if (process.env.CMS_GITHUB_TOKEN) {
-    await writeEditableContentFileToGitHub(safePath, content);
-  } else {
-    await fs.writeFile(absolutePath, content, 'utf8');
+  // Always write to local filesystem first for instant preview
+  await fs.writeFile(absolutePath, content, 'utf8');
+
+  // Fire-and-forget GitHub sync for persistence — don't block the response
+  if (process.env.CMS_GITHUB_TOKEN) {
+    void writeEditableContentFileToGitHub(safePath, content).catch(() => {});
   }
 
   return { path: safePath };

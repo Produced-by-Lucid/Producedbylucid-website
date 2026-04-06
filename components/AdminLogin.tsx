@@ -1,9 +1,25 @@
+// ---------------------------------------------------------------------------
+// AdminLogin — Password gate for the CMS dashboard.
+//
+// Flow:
+//   1. User enters the dashboard password.
+//   2. On submit, we attempt a GET /api/cms/files with the password in the
+//      "x-cms-password" header to verify it.
+//   3. If the server returns 200, the password is valid — we save it to
+//      localStorage (so the session survives page refreshes) and call
+//      the onAuthenticated callback.
+//   4. If the server returns 401 (or any non-ok status), we show an error.
+// ---------------------------------------------------------------------------
+
 'use client';
 
+import '@fontsource-variable/instrument-sans/index.css';
 import { type CSSProperties, type FormEvent, useState } from 'react';
 
+/** localStorage key shared with AdminShell to persist the session. */
 const PASSWORD_STORAGE_KEY = 'cms_dashboard_password';
 
+/** Shared style for the password text input. */
 const inputStyle: CSSProperties = {
   width: '100%',
   padding: '0.75rem 0.85rem',
@@ -15,6 +31,10 @@ const inputStyle: CSSProperties = {
   boxSizing: 'border-box',
 };
 
+/**
+ * Login form displayed when no valid session exists.
+ * @param onAuthenticated — callback fired with the validated password string.
+ */
 export default function AdminLogin({ onAuthenticated }: { onAuthenticated: (password: string) => void }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +72,7 @@ export default function AdminLogin({ onAuthenticated }: { onAuthenticated: (pass
         alignItems: 'center',
         justifyContent: 'center',
         background: 'linear-gradient(180deg, #fdf2e8 0%, #f6f8fb 18%, #f4f6f8 100%)',
-        fontFamily: 'Georgia, serif',
+        fontFamily: "'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif",
         padding: '1rem',
       }}
     >
