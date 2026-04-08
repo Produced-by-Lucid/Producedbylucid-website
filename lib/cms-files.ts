@@ -157,12 +157,33 @@ async function writeEditableContentFileToGitHub(safePath: string, content: strin
 export async function writeEditableContentFile(relativePath: string, content: string) {
   const { absolutePath, safePath } = resolveContentPath(relativePath);
 
-  // Always write to local filesystem first for instant preview
-  await fs.writeFile(absolutePath, content, 'utf8');
+  // Try to write locally (works in dev / self-hosted). On read-only filesystems
+  // (e.g. Vercel serverless) this will throw EROFS/EACCES and we fall back to
+  // writing directly to GitHub as the primary store.
+  let localWriteOk = false;
+  try {
+    await fs.writeFile(absolutePath, content, 'utf8');
+    localWriteOk = true;
+  } catch (err: unknown) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code !== 'EROFS' && code !== 'EACCES' && code !== 'EPERM') throw err;
+    // Read-only filesystem — will use GitHub as primary below
+  }
 
-  // Fire-and-forget GitHub sync for persistence — don't block the response
   if (process.env.CMS_GITHUB_TOKEN) {
-    void writeEditableContentFileToGitHub(safePath, content).catch(() => {});
+    if (!localWriteOk) {
+      // Production read-only FS: await GitHub synchronously so the caller
+      // knows whether the save actually succeeded.
+      await writeEditableContentFileToGitHub(safePath, content);
+    } else {
+      // Dev / self-hosted: local write succeeded, sync GitHub in background.
+      void writeEditableContentFileToGitHub(safePath, content).catch(() => {});
+    }
+  } else if (!localWriteOk) {
+    throw new Error(
+      'File system is read-only and no GitHub token is configured. ' +
+      'Set CMS_GITHUB_TOKEN, CMS_GITHUB_OWNER, and CMS_GITHUB_REPO to enable CMS saves in production.',
+    );
   }
 
   return { path: safePath };
@@ -206,10 +227,25 @@ async function deleteEditableContentFileFromGitHub(safePath: string): Promise<vo
 export async function deleteEditableContentFile(relativePath: string) {
   const { absolutePath, safePath } = resolveContentPath(relativePath);
 
-  await fs.unlink(absolutePath);
+  let localDeleteOk = false;
+  try {
+    await fs.unlink(absolutePath);
+    localDeleteOk = true;
+  } catch (err: unknown) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code !== 'EROFS' && code !== 'EACCES' && code !== 'EPERM') throw err;
+  }
 
   if (process.env.CMS_GITHUB_TOKEN) {
-    void deleteEditableContentFileFromGitHub(safePath).catch(() => {});
+    if (!localDeleteOk) {
+      await deleteEditableContentFileFromGitHub(safePath);
+    } else {
+      void deleteEditableContentFileFromGitHub(safePath).catch(() => {});
+    }
+  } else if (!localDeleteOk) {
+    throw new Error(
+      'File system is read-only and no GitHub token is configured. Cannot delete file in production.',
+    );
   }
 
   return { path: safePath };
