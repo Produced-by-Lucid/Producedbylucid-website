@@ -2,7 +2,8 @@
 
 import '@fontsource-variable/instrument-sans/index.css';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
-import { LuRefreshCw, LuPanelLeftClose, LuPanelLeftOpen, LuArrowLeft, LuGripVertical, LuX, LuSave, LuChevronDown, LuChevronRight, LuLogOut, LuRotateCw, LuPencil } from 'react-icons/lu';
+import { LuRefreshCw, LuPanelLeftClose, LuPanelLeftOpen, LuArrowLeft, LuGripVertical, LuX, LuSave, LuChevronDown, LuChevronRight, LuLogOut, LuRotateCw, LuPencil, LuPlus, LuTrash2 } from 'react-icons/lu';
+import BlogEditor from './BlogEditor';
 
 // ---------------------------------------------------------------------------
 // Type definitions — shapes of API responses and internal data models
@@ -25,15 +26,15 @@ type UploadResponse = { url?: string; error?: string };
 // VIDEO_EXT_PATTERN: matches common video file extensions
 // ---------------------------------------------------------------------------
 
-const IMAGE_KEY_PATTERN = /image|img|photo|logo|avatar|thumbnail|cover|banner|icon|poster|src/i;
+const IMAGE_KEY_PATTERN = /image|img|photo|logo|avatar|thumbnail|cover|banner|icon|poster|src|video/i;
 const IMAGE_EXT_PATTERN = /\.(jpg|jpeg|png|gif|webp|svg|ico)$/i;
 const VIDEO_EXT_PATTERN = /\.(mp4|webm)$/i;
 
-/** Returns true if a JSON string field should be rendered as an image upload field. */
+/** Returns true if a JSON string field should be rendered as an image/video upload field. */
 function isImageField(fieldKey: string, value: string) {
   if (IMAGE_KEY_PATTERN.test(fieldKey)) return true;
   if (IMAGE_EXT_PATTERN.test(value)) return true;
-  if (value.startsWith('/') && (IMAGE_EXT_PATTERN.test(value) || VIDEO_EXT_PATTERN.test(value))) return true;
+  if (VIDEO_EXT_PATTERN.test(value)) return true;
   return false;
 }
 
@@ -45,13 +46,15 @@ function isImageField(fieldKey: string, value: string) {
 const HOME_PAGE_FILE = 'pages/home.json';
 const SITE_SETTINGS_FILE = 'settings/site.json';
 const BLOG_POSTS_PREFIX = 'posts/';
+const PROJECTS_PREFIX = 'projects/';
+const TESTIMONIALS_PREFIX = 'testimonials/';
 
 // The ordered list of editable sections on the home page.
 // Each "key" must match a top-level key in content/pages/home.json.
 const HOME_PAGE_SECTIONS: SectionDefinition[] = [
   { key: 'hero', label: 'Hero' },
   { key: 'projectsSection', label: 'Featured Projects' },
-  { key: 'featureShowcase', label: 'Featured showcase' },
+  { key: 'featureShowcase', label: 'Intro' },
   { key: 'servicesSection', label: 'Services' },
   { key: 'testimonialsSection', label: 'Testimonials' },
   { key: 'blogSection', label: 'Blog' },
@@ -88,10 +91,18 @@ function fileLabel(filePath: string) {
   return filePath.split('/').pop() ?? filePath;
 }
 
-/** Turns a blog post filename into a human-readable title. e.g. "my-cool-post.md" → "My Cool Post" */
+/** Turns a blog post filename into a human-readable title. e.g. "my-cool-post.json" → "My Cool Post" */
 function blogLabel(filePath: string) {
   return fileLabel(filePath)
-    .replace(/\.md$/i, '')
+    .replace(/\.(md|json)$/i, '')
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+/** Turns a project/testimonial JSON filename into a human-readable title. */
+function contentLabel(filePath: string) {
+  return fileLabel(filePath)
+    .replace(/\.json$/i, '')
     .replace(/-/g, ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
@@ -700,6 +711,12 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
   const [panelOpen, setPanelOpen] = useState(false);             // Whether the floating form panel is visible
   const [panelPos, setPanelPos] = useState({ x: 204, y: 12 }); // Top-left position of the floating panel (next to sidebar)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // Collapse sidebar into a small edit icon
+  const [gridView, setGridView] = useState<'projects' | 'testimonials' | null>(null); // Grid picker mode for the panel
+  const [multiContents, setMultiContents] = useState<Record<string, string>>({}); // All file contents for combined view
+  const [loadingMulti, setLoadingMulti] = useState(false); // Loading all category files
+  const [savingFile, setSavingFile] = useState<string | null>(null); // Which file in multi-view is currently saving
+  const [panelWidth, setPanelWidth] = useState(440); // Current panel width (resizable)
+  const [resizing, setResizing] = useState(false); // Whether the user is dragging the resize handle
 
   // --- Refs ---
   const formScrollRef = useRef<HTMLDivElement>(null);   // Scrollable container for the form editor
@@ -741,6 +758,40 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     setPendingSectionScroll(null);
   }, [activeEditorTab, content, loadingContent, pendingSectionScroll, selectedFile]);
 
+  // --- Effect: load all files in category when gridView opens ---
+  useEffect(() => {
+    if (!gridView) return;
+    const prefix = gridView === 'projects' ? PROJECTS_PREFIX : TESTIMONIALS_PREFIX;
+    const filesToLoad = files.filter((fp) => fp.startsWith(prefix)).sort((a, b) => a.localeCompare(b));
+    if (filesToLoad.length === 0) return;
+
+    let cancelled = false;
+    setLoadingMulti(true);
+
+    Promise.all(
+      filesToLoad.map(async (fp) => {
+        const res = await fetch(`/api/cms/files/${encodeURI(fp)}`, { headers: { 'x-cms-password': password } });
+        const body = (await res.json()) as FileResponse;
+        if (!res.ok) throw new Error(body.error ?? `Failed to load ${fp}`);
+        return [fp, body.content] as [string, string];
+      }),
+    )
+      .then((entries) => {
+        if (cancelled) return;
+        setMultiContents(Object.fromEntries(entries));
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : 'Failed to load files.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingMulti(false);
+      });
+
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gridView, files]);
+
   // --- Effect: draggable floating panel ---
   // Listens for mousemove/mouseup globally so the drag keeps working
   // even if the cursor leaves the panel header.
@@ -769,6 +820,30 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     };
   }, [dragging]);
 
+  // --- Effect: panel resize handle ---
+  useEffect(() => {
+    if (!resizing) return;
+
+    function onMouseMove(e: MouseEvent) {
+      e.preventDefault();
+      const newWidth = Math.max(360, e.clientX - panelPos.x);
+      setPanelWidth(newWidth);
+    }
+
+    function onMouseUp() {
+      setResizing(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [resizing, panelPos.x]);
+
   /** Start dragging the floating panel from its header bar. */
   function startPanelDrag(e: React.MouseEvent) {
     e.preventDefault();
@@ -789,8 +864,11 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     [files.length],
   );
 
-  /** True when the selected file is Markdown (blog posts). Markdown files always use the code editor. */
+  /** True when the selected file is Markdown. Markdown files always use the code editor. */
   const isMdFile = selectedFile?.endsWith('.md') ?? false;
+
+  /** True when the selected file is a blog post JSON file (uses the block editor). */
+  const isBlogPost = selectedFile?.startsWith(BLOG_POSTS_PREFIX) && selectedFile?.endsWith('.json');
 
   /** Subset of files that live under the blog posts directory, alphabetically sorted. */
   const blogFiles = useMemo(
@@ -798,12 +876,28 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     [files],
   );
 
-  /** All remaining files that aren't the home page, site settings, or blog posts. */
+  /** Project content files (projects/*.json), shown under Featured Projects. */
+  const projectFiles = useMemo(
+    () => files.filter((filePath) => filePath.startsWith(PROJECTS_PREFIX)).sort((left, right) => left.localeCompare(right)),
+    [files],
+  );
+
+  /** Testimonial content files (testimonials/*.json), shown under Testimonials. */
+  const testimonialFiles = useMemo(
+    () => files.filter((filePath) => filePath.startsWith(TESTIMONIALS_PREFIX)).sort((left, right) => left.localeCompare(right)),
+    [files],
+  );
+
+  /** All remaining files that aren't the home page, site settings, blog posts, projects, or testimonials. */
   const libraryFiles = useMemo(
     () =>
       files.filter(
         (filePath) =>
-          filePath !== HOME_PAGE_FILE && filePath !== SITE_SETTINGS_FILE && !filePath.startsWith(BLOG_POSTS_PREFIX),
+          filePath !== HOME_PAGE_FILE &&
+          filePath !== SITE_SETTINGS_FILE &&
+          !filePath.startsWith(BLOG_POSTS_PREFIX) &&
+          !filePath.startsWith(PROJECTS_PREFIX) &&
+          !filePath.startsWith(TESTIMONIALS_PREFIX),
       ),
     [files],
   );
@@ -823,7 +917,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     if (selectedFile === HOME_PAGE_FILE) return '/';
     if (selectedFile === SITE_SETTINGS_FILE) return '/';
     if (selectedFile.startsWith(BLOG_POSTS_PREFIX)) {
-      const slug = selectedFile.replace(BLOG_POSTS_PREFIX, '').replace(/\.md$/i, '');
+      const slug = selectedFile.replace(BLOG_POSTS_PREFIX, '').replace(/\.(md|json)$/i, '');
       return `/journal/${slug}`;
     }
     return '/';
@@ -926,15 +1020,85 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
 
   // --- Navigation helpers ---
 
+  /** Saves a single file from the multi-file combined view. */
+  async function saveMultiFile(filePath: string) {
+    const fileContent = multiContents[filePath];
+    if (!fileContent) return;
+
+    setSavingFile(filePath);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/cms/files/${encodeURI(filePath)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-cms-password': password },
+        body: JSON.stringify({ content: fileContent }),
+      });
+      const body = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(body.error ?? 'Unable to save.');
+      setStatus(`Saved ${filePath} at ${new Date().toLocaleTimeString()}`);
+      setPreviewKey((k) => k + 1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to save.');
+    } finally {
+      setSavingFile(null);
+    }
+  }
+
+  /** Saves all modified files in the multi-file combined view. */
+  async function saveAllMultiFiles() {
+    const filesToSave = gridView === 'projects' ? projectFiles : gridView === 'testimonials' ? testimonialFiles : [];
+    setSaving(true);
+    setError(null);
+
+    try {
+      await Promise.all(
+        filesToSave.map(async (fp) => {
+          const fileContent = multiContents[fp];
+          if (!fileContent) return;
+          const res = await fetch(`/api/cms/files/${encodeURI(fp)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'x-cms-password': password },
+            body: JSON.stringify({ content: fileContent }),
+          });
+          const body = (await res.json()) as { error?: string };
+          if (!res.ok) throw new Error(body.error ?? `Failed to save ${fp}`);
+        }),
+      );
+      setStatus(`Saved all at ${new Date().toLocaleTimeString()}`);
+      setPreviewKey((k) => k + 1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to save.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   /** Selects a file in the sidebar and clears any pending section scroll. */
   function selectFile(filePath: string) {
     setSelectedFile(filePath);
     setPendingSectionScroll(null);
+    setGridView(null);
     setPanelOpen(true);
   }
 
   /** Selects the home page file, switches to the form editor, and queues a scroll to the given section. */
   function openHomeSection(sectionKey: string) {
+    // For projects/testimonials, open the grid picker instead of the home form
+    if (sectionKey === 'projectsSection' && projectFiles.length > 0) {
+      setGridView('projects');
+      setPanelWidth(Math.max(panelWidth, 700));
+      setPanelOpen(true);
+      return;
+    }
+    if (sectionKey === 'testimonialsSection' && testimonialFiles.length > 0) {
+      setGridView('testimonials');
+      setPanelWidth(Math.max(panelWidth, 700));
+      setPanelOpen(true);
+      return;
+    }
+
+    setGridView(null);
     setActiveSidebarTab('pages');
     setHomeOpen(true);
     setActiveEditorTab('form');
@@ -976,11 +1140,11 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
           key={previewKey}
           src={`${previewUrl}${previewUrl.includes('?') ? '&' : '?'}t=${previewKey}`}
           title="Site preview"
-          style={{ width: '100%', height: '100%', border: 'none', display: 'block', pointerEvents: dragging ? 'none' : 'auto' }}
+          style={{ width: '100%', height: '100%', border: 'none', display: 'block', pointerEvents: dragging || resizing ? 'none' : 'auto' }}
         />
 
-        {/* Transparent overlay prevents iframe from stealing mouse events during drag */}
-        {dragging ? (
+        {/* Transparent overlay prevents iframe from stealing mouse events during drag/resize */}
+        {dragging || resizing ? (
           <div
             style={{
               position: 'fixed',
@@ -1114,7 +1278,12 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                             width: '100%',
                             textAlign: 'left',
                             border: 'none',
-                            background: selectedFile === HOME_PAGE_FILE && pendingSectionScroll === section.key ? '#f0f2f5' : 'transparent',
+                            background:
+                              (section.key === 'projectsSection' && gridView === 'projects') ||
+                              (section.key === 'testimonialsSection' && gridView === 'testimonials') ||
+                              (selectedFile === HOME_PAGE_FILE && pendingSectionScroll === section.key)
+                                ? '#f0f2f5'
+                                : 'transparent',
                             color: '#3a4a5a',
                             borderRadius: 8,
                             padding: '0.35rem 0.45rem',
@@ -1156,31 +1325,132 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                   </button>
                   {blogOpen
                     ? blogFiles.map((fp) => (
-                        <button
+                        <div
                           key={fp}
-                          type="button"
-                          onClick={() => selectFile(fp)}
-                          title={fp}
                           style={{
-                            width: '100%',
-                            textAlign: 'left',
-                            border: 'none',
-                            background: selectedFile === fp ? '#f0f2f5' : 'transparent',
-                            color: selectedFile === fp ? '#132030' : '#3a4a5a',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.2rem',
                             borderRadius: 8,
-                            padding: '0.35rem 0.45rem',
-                            cursor: 'pointer',
-                            fontSize: '0.78rem',
-                            fontWeight: selectedFile === fp ? 600 : 500,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
+                            background: selectedFile === fp ? '#f0f2f5' : 'transparent',
                           }}
                         >
-                          {blogLabel(fp)}
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => selectFile(fp)}
+                            title={fp}
+                            style={{
+                              flex: 1,
+                              textAlign: 'left',
+                              border: 'none',
+                              background: 'transparent',
+                              color: selectedFile === fp ? '#132030' : '#3a4a5a',
+                              borderRadius: 8,
+                              padding: '0.35rem 0.45rem',
+                              cursor: 'pointer',
+                              fontSize: '0.78rem',
+                              fontWeight: selectedFile === fp ? 600 : 500,
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              minWidth: 0,
+                            }}
+                          >
+                            {blogLabel(fp)}
+                          </button>
+                          <button
+                            type="button"
+                            title="Delete post"
+                            onClick={async () => {
+                              const label = blogLabel(fp);
+                              if (!window.confirm(`Delete "${label}"? This cannot be undone.`)) return;
+                              try {
+                                const res = await fetch(`/api/cms/files/${encodeURI(fp)}`, {
+                                  method: 'DELETE',
+                                  headers: { 'x-cms-password': password },
+                                });
+                                if (!res.ok) {
+                                  const data = (await res.json()) as { error?: string };
+                                  setError(data.error ?? 'Failed to delete post.');
+                                  return;
+                                }
+                                if (selectedFile === fp) setSelectedFile(null);
+                                await loadFiles();
+                              } catch {
+                                setError('Failed to delete post.');
+                              }
+                            }}
+                            style={{
+                              flexShrink: 0,
+                              border: 'none',
+                              background: 'transparent',
+                              color: '#c0392b',
+                              cursor: 'pointer',
+                              padding: '0.3rem 0.4rem',
+                              borderRadius: 6,
+                              display: 'flex',
+                              alignItems: 'center',
+                              opacity: 0.6,
+                            }}
+                            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
+                            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.6'; }}
+                          >
+                            <LuTrash2 size={13} />
+                          </button>
+                        </div>
                       ))
                     : null}
+                  {blogOpen && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const slug = prompt('Enter a URL slug for the new post (e.g. my-new-post):');
+                        if (!slug) return;
+                        const safeName = slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/--+/g, '-');
+                        if (!safeName) return;
+                        const filePath = `${BLOG_POSTS_PREFIX}${safeName}.json`;
+                        const template: import('@/lib/site-types').BlogPostData = {
+                          title: '',
+                          excerpt: '',
+                          meta: 'Insight',
+                          coverImage: '',
+                          publishedAt: new Date().toISOString().split('T')[0],
+                          blocks: [],
+                        };
+                        try {
+                          const res = await fetch(`/api/cms/files/${encodeURI(filePath)}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'x-cms-password': password },
+                            body: JSON.stringify({ content: JSON.stringify(template, null, 2) }),
+                          });
+                          if (!res.ok) throw new Error('Failed to create');
+                          setFiles((prev) => [...prev, filePath].sort());
+                          selectFile(filePath);
+                          setContent(JSON.stringify(template, null, 2));
+                        } catch {
+                          setError('Failed to create new post.');
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        border: '1px dashed #cdd5dc',
+                        background: 'transparent',
+                        color: '#6b7b8c',
+                        borderRadius: 8,
+                        padding: '0.35rem 0.45rem',
+                        cursor: 'pointer',
+                        fontSize: '0.74rem',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        marginTop: '0.15rem',
+                      }}
+                    >
+                      <LuPlus size={11} /> New Post
+                    </button>
+                  )}
                 </div>
 
                 {/* Library */}
@@ -1282,15 +1552,15 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
         </nav>
 
         {/* ── Floating form editor panel (appears on section click) ── */}
-        {panelOpen && selectedFile ? (
+        {panelOpen && (selectedFile || gridView) ? (
           <div
             ref={panelRef}
             style={{
               position: 'fixed',
               top: panelPos.y,
               left: panelPos.x,
-              width: 440,
-              maxWidth: 'calc(100vw - 220px)',
+              width: panelWidth,
+              maxWidth: 'calc(100vw - 24px)',
               maxHeight: 'calc(100vh - 32px)',
               display: 'flex',
               flexDirection: 'column',
@@ -1302,6 +1572,24 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
               overflow: 'hidden',
             }}
           >
+            {/* Resize handle on right edge */}
+            <div
+              onMouseDown={(e) => {
+                e.preventDefault();
+                document.body.style.cursor = 'ew-resize';
+                document.body.style.userSelect = 'none';
+                setResizing(true);
+              }}
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                width: 6,
+                height: '100%',
+                cursor: 'ew-resize',
+                zIndex: 2,
+              }}
+            />
             {/* Drag handle header */}
             <div
               onMouseDown={startPanelDrag}
@@ -1320,33 +1608,56 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
                 <LuGripVertical size={14} style={{ color: '#b0b8c1', flexShrink: 0 }} />
                 <span style={{ fontWeight: 700, fontSize: '0.82rem', color: '#132030', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {selectedFile === HOME_PAGE_FILE ? 'Home' : fileLabel(selectedFile)}
+                  {gridView ? (gridView === 'projects' ? 'Featured Projects' : 'Testimonials') : selectedFile === HOME_PAGE_FILE ? 'Home' : selectedFile ? contentLabel(selectedFile) : ''}
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
+                {gridView ? (
+                  <button
+                    type="button"
+                    onClick={() => void saveAllMultiFiles()}
+                    disabled={saving || loadingMulti}
+                    style={{
+                      border: 'none',
+                      borderRadius: 8,
+                      background: '#1f7a52',
+                      color: '#fff',
+                      padding: '0.3rem 0.6rem',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                    }}
+                  >
+                    {saving ? '...' : <><LuSave size={12} /> Save All</>}
+                  </button>
+                ) : selectedFile ? (
+                  <button
+                    type="button"
+                    onClick={() => void saveCurrentFile()}
+                    disabled={!selectedFile || loadingContent || saving}
+                    style={{
+                      border: 'none',
+                      borderRadius: 8,
+                      background: '#1f7a52',
+                      color: '#fff',
+                      padding: '0.3rem 0.6rem',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                    }}
+                  >
+                    {saving ? '...' : <><LuSave size={12} /> Save</>}
+                  </button>
+                ) : null}
                 <button
                   type="button"
-                  onClick={() => void saveCurrentFile()}
-                  disabled={!selectedFile || loadingContent || saving}
-                  style={{
-                    border: 'none',
-                    borderRadius: 8,
-                    background: '#1f7a52',
-                    color: '#fff',
-                    padding: '0.3rem 0.6rem',
-                    cursor: 'pointer',
-                    fontWeight: 700,
-                    fontSize: '0.75rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                  }}
-                >
-                  {saving ? '...' : <><LuSave size={12} /> Save</>}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPanelOpen(false)}
+                  onClick={() => { setPanelOpen(false); setGridView(null); }}
                   title="Close editor panel"
                   style={{
                     border: 'none',
@@ -1365,8 +1676,8 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
               </div>
             </div>
 
-            {/* Form / Code tab switcher (JSON files only) */}
-            {!isMdFile && selectedFile ? (
+            {/* Form / Code tab switcher (JSON files only, not blog posts which get the block editor) */}
+            {!isMdFile && !isBlogPost && selectedFile ? (
               <div style={{ display: 'flex', padding: '0 0.7rem', borderBottom: '1px solid #edf0f3', flexShrink: 0 }}>
                 {(['form', 'code'] as const).map((tab) => (
                   <button
@@ -1393,8 +1704,116 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
 
             {/* Scrollable editor body */}
             <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '0.65rem 0.7rem' }}>
-              {loadingContent ? (
+              {gridView ? (
+                loadingMulti ? (
+                  <p style={{ color: '#4a6276', padding: '0.5rem 0', fontSize: '0.85rem' }}>Loading all items...</p>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.65rem' }}>
+                    {(gridView === 'projects' ? projectFiles : testimonialFiles).map((fp, idx) => (
+                      <section
+                        key={fp}
+                        style={{
+                          background: '#fff',
+                          border: '1px solid #e7edf2',
+                          borderRadius: 14,
+                          overflow: 'hidden',
+                          display: 'flex',
+                          flexDirection: 'column',
+                        }}
+                      >
+                        {/* Card header with order badge */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '0.45rem 0.7rem',
+                          borderBottom: '1px solid #edf0f3',
+                          background: '#fafbfc',
+                          gap: '0.4rem',
+                        }}>
+                          <button
+                            type="button"
+                            disabled={idx === 0}
+                            onClick={() => {
+                              const allFiles = gridView === 'projects' ? projectFiles : testimonialFiles;
+                              const prevFp = allFiles[idx - 1];
+                              if (!prevFp) return;
+                              const curr = multiContents[fp];
+                              const prev = multiContents[prevFp];
+                              if (!curr || !prev) return;
+                              // Swap order values
+                              try {
+                                const currObj = JSON.parse(curr) as JsonObject;
+                                const prevObj = JSON.parse(prev) as JsonObject;
+                                const tmpOrder = currObj.order;
+                                currObj.order = prevObj.order;
+                                prevObj.order = tmpOrder;
+                                setMultiContents((m) => ({ ...m, [fp]: JSON.stringify(currObj, null, 2), [prevFp]: JSON.stringify(prevObj, null, 2) }));
+                              } catch { /* ignore parse errors */ }
+                            }}
+                            style={{ border: 'none', background: 'none', cursor: idx === 0 ? 'default' : 'pointer', color: idx === 0 ? '#cdd5dc' : '#7a8794', fontSize: '0.82rem', padding: '0.1rem 0.3rem' }}
+                          >
+                            &lsaquo;
+                          </button>
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 24,
+                            height: 24,
+                            borderRadius: 6,
+                            background: '#de692e',
+                            color: '#fff',
+                            fontWeight: 800,
+                            fontSize: '0.72rem',
+                          }}>
+                            {idx + 1}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={idx === (gridView === 'projects' ? projectFiles : testimonialFiles).length - 1}
+                            onClick={() => {
+                              const allFiles = gridView === 'projects' ? projectFiles : testimonialFiles;
+                              const nextFp = allFiles[idx + 1];
+                              if (!nextFp) return;
+                              const curr = multiContents[fp];
+                              const next = multiContents[nextFp];
+                              if (!curr || !next) return;
+                              try {
+                                const currObj = JSON.parse(curr) as JsonObject;
+                                const nextObj = JSON.parse(next) as JsonObject;
+                                const tmpOrder = currObj.order;
+                                currObj.order = nextObj.order;
+                                nextObj.order = tmpOrder;
+                                setMultiContents((m) => ({ ...m, [fp]: JSON.stringify(currObj, null, 2), [nextFp]: JSON.stringify(nextObj, null, 2) }));
+                              } catch { /* ignore parse errors */ }
+                            }}
+                            style={{ border: 'none', background: 'none', cursor: idx === (gridView === 'projects' ? projectFiles : testimonialFiles).length - 1 ? 'default' : 'pointer', color: idx === (gridView === 'projects' ? projectFiles : testimonialFiles).length - 1 ? '#cdd5dc' : '#7a8794', fontSize: '0.82rem', padding: '0.1rem 0.3rem' }}
+                          >
+                            &rsaquo;
+                          </button>
+                        </div>
+
+                        {/* Card form body */}
+                        <div style={{ padding: '0.5rem 0.6rem', flex: 1 }}>
+                          {multiContents[fp] !== undefined ? (
+                            <FormEditor
+                              content={multiContents[fp]}
+                              onChange={(next) => setMultiContents((prev) => ({ ...prev, [fp]: next }))}
+                              password={password}
+                            />
+                          ) : (
+                            <p style={{ color: '#8a96a3', fontSize: '0.82rem' }}>Not loaded</p>
+                          )}
+                        </div>
+                      </section>
+                    ))}
+                  </div>
+                )
+              ) : loadingContent ? (
                 <p style={{ color: '#4a6276', padding: '0.5rem 0', fontSize: '0.85rem' }}>Loading...</p>
+              ) : isBlogPost ? (
+                <BlogEditor key={selectedFile} content={content} onChange={setContent} password={password} />
               ) : isMdFile || activeEditorTab === 'code' ? (
                 <textarea
                   value={content}

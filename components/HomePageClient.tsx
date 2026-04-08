@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import LoadingScreen from './LoadingScreen';
 import ClientsMarquee from './ClientsMarquee';
 import FeaturesSection from './FeaturesSection';
 import Hero from './Hero';
@@ -33,9 +34,19 @@ export default function HomePageClient({
   posts,
 }: HomePageClientProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+
+  // Collect all above-the-fold and key images for real preloading
+  const preloadImages = [
+    '/obj.svg',
+    ...home.featureShowcase.slides.map((s) => s.image),
+    ...projects.map((p) => p.image),
+    ...posts.map((p) => p.coverImage),
+  ];
 
   return (
     <div className="relative min-h-screen w-full overflow-x-clip">
+      {!loaded && <LoadingScreen images={preloadImages} onDone={() => setLoaded(true)} />}
       <div
         className="pointer-events-none fixed inset-0 z-50 opacity-10 mix-blend-plus-darker"
         style={{
@@ -82,7 +93,7 @@ export default function HomePageClient({
           servicesSection={home.servicesSection}
           testimonialsSection={home.testimonialsSection}
           testimonials={testimonials}
-          // blogSection={home.blogSection}
+          blogSection={home.blogSection}
           posts={posts}
         />
       </div>

@@ -14,9 +14,9 @@ export default function BlogPosts({ eyebrow, heading, posts }: BlogPostsProps) {
   return (
     <section
       id="blog"
-      className="relative px-4 sm:px-6 py-16 sm:py-24 -mt-8 bg-gradient-to-b from-[#174826]/0 from-10% to-black"
+      className="relative px-4 sm:px-6 py-16 sm:pb-24 sm:pt-32 -mt-8 bg-gradient-to-b from-[#174826]/0 from-10% to-black"
     >
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto sm:pt-24">
         <p className="section-title-text text-sm uppercase tracking-[0.45em] text-white/70 mb-4">{eyebrow}</p>
         <h3 className="text-3xl sm:text-5xl font-bold text-white mb-10">{heading}</h3>
 

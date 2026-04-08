@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import matter from 'gray-matter';
 import type {
+  BlogPostData,
   HomePageContent,
   PostDetail,
   PostSummary,
@@ -52,11 +53,25 @@ export const getPosts = cache(async () => {
 
   const posts = await Promise.all(
     filenames
-      .filter((filename) => filename.endsWith('.md'))
+      .filter((filename) => filename.endsWith('.json') || filename.endsWith('.md'))
       .map(async (filename) => {
-        const slug = filename.replace(/\.md$/, '');
         const filePath = path.join(directoryPath, filename);
         const source = await fs.readFile(filePath, 'utf8');
+
+        if (filename.endsWith('.json')) {
+          const data = JSON.parse(source) as BlogPostData;
+          return {
+            slug: filename.replace(/\.json$/, ''),
+            title: data.title ?? '',
+            excerpt: data.excerpt ?? '',
+            meta: data.meta ?? '',
+            coverImage: data.coverImage ?? '',
+            publishedAt: data.publishedAt ?? '',
+          } satisfies PostSummary;
+        }
+
+        // Legacy .md support
+        const slug = filename.replace(/\.md$/, '');
         const { data } = matter(source);
 
         return {
@@ -74,8 +89,30 @@ export const getPosts = cache(async () => {
 });
 
 export const getPostBySlug = cache(async (slug: string) => {
-  const filePath = path.join(CONTENT_ROOT, 'posts', `${slug}.md`);
-  const source = await fs.readFile(filePath, 'utf8');
+  const directoryPath = path.join(CONTENT_ROOT, 'posts');
+
+  // Try .json first, then .md
+  const jsonPath = path.join(directoryPath, `${slug}.json`);
+  try {
+    const source = await fs.readFile(jsonPath, 'utf8');
+    const data = JSON.parse(source) as BlogPostData;
+    return {
+      slug,
+      title: data.title ?? '',
+      excerpt: data.excerpt ?? '',
+      meta: data.meta ?? '',
+      coverImage: data.coverImage ?? '',
+      publishedAt: data.publishedAt ?? '',
+      blocks: data.blocks ?? [],
+      html: data.html,
+      body: '',
+    } satisfies PostDetail;
+  } catch {
+    // Fall through to .md
+  }
+
+  const mdPath = path.join(directoryPath, `${slug}.md`);
+  const source = await fs.readFile(mdPath, 'utf8');
   const { data, content } = matter(source);
 
   return {
@@ -85,6 +122,7 @@ export const getPostBySlug = cache(async (slug: string) => {
     meta: String(data.meta ?? ''),
     coverImage: String(data.coverImage ?? ''),
     publishedAt: String(data.publishedAt ?? ''),
+    blocks: [],
     body: content,
   } satisfies PostDetail;
 });

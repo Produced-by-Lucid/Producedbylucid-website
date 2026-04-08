@@ -157,12 +157,95 @@ async function writeEditableContentFileToGitHub(safePath: string, content: strin
 export async function writeEditableContentFile(relativePath: string, content: string) {
   const { absolutePath, safePath } = resolveContentPath(relativePath);
 
-  // Always write to local filesystem first for instant preview
-  await fs.writeFile(absolutePath, content, 'utf8');
+  // Try to write locally (works in dev / self-hosted). On read-only filesystems
+  // (e.g. Vercel serverless) this will throw EROFS/EACCES and we fall back to
+  // writing directly to GitHub as the primary store.
+  let localWriteOk = false;
+  try {
+    await fs.writeFile(absolutePath, content, 'utf8');
+    localWriteOk = true;
+  } catch (err: unknown) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code !== 'EROFS' && code !== 'EACCES' && code !== 'EPERM') throw err;
+    // Read-only filesystem — will use GitHub as primary below
+  }
 
-  // Fire-and-forget GitHub sync for persistence — don't block the response
   if (process.env.CMS_GITHUB_TOKEN) {
-    void writeEditableContentFileToGitHub(safePath, content).catch(() => {});
+    if (!localWriteOk) {
+      // Production read-only FS: await GitHub synchronously so the caller
+      // knows whether the save actually succeeded.
+      await writeEditableContentFileToGitHub(safePath, content);
+    } else {
+      // Dev / self-hosted: local write succeeded, sync GitHub in background.
+      void writeEditableContentFileToGitHub(safePath, content).catch(() => {});
+    }
+  } else if (!localWriteOk) {
+    throw new Error(
+      'File system is read-only and no GitHub token is configured. ' +
+      'Set CMS_GITHUB_TOKEN, CMS_GITHUB_OWNER, and CMS_GITHUB_REPO to enable CMS saves in production.',
+    );
+  }
+
+  return { path: safePath };
+}
+
+async function deleteEditableContentFileFromGitHub(safePath: string): Promise<void> {
+  const token = process.env.CMS_GITHUB_TOKEN;
+  const owner = process.env.CMS_GITHUB_OWNER;
+  const repo = process.env.CMS_GITHUB_REPO;
+  const branch = process.env.CMS_GITHUB_BRANCH ?? 'main';
+
+  if (!token || !owner || !repo) return;
+
+  const apiUrl = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/content/${safePath}`;
+  const authHeaders: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+
+  // Get current SHA (required to delete via GitHub API)
+  const getResponse = await fetch(`${apiUrl}?ref=${encodeURIComponent(branch)}`, { headers: authHeaders });
+  if (!getResponse.ok) return; // file doesn't exist on GitHub, nothing to delete
+
+  const fileData = (await getResponse.json()) as { sha?: string };
+  if (!fileData.sha) return;
+
+  const deleteResponse = await fetch(apiUrl, {
+    method: 'DELETE',
+    headers: { ...authHeaders, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: `cms: delete ${safePath}`, sha: fileData.sha, branch }),
+  });
+
+  if (!deleteResponse.ok) {
+    const errorData = (await deleteResponse.json().catch(() => ({}))) as { message?: string };
+    const message = errorData.message ?? 'Unable to delete file on GitHub.';
+    throw new Error(formatGitHubPersistenceError(deleteResponse.status, message, owner, repo));
+  }
+}
+
+export async function deleteEditableContentFile(relativePath: string) {
+  const { absolutePath, safePath } = resolveContentPath(relativePath);
+
+  let localDeleteOk = false;
+  try {
+    await fs.unlink(absolutePath);
+    localDeleteOk = true;
+  } catch (err: unknown) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code !== 'EROFS' && code !== 'EACCES' && code !== 'EPERM') throw err;
+  }
+
+  if (process.env.CMS_GITHUB_TOKEN) {
+    if (!localDeleteOk) {
+      await deleteEditableContentFileFromGitHub(safePath);
+    } else {
+      void deleteEditableContentFileFromGitHub(safePath).catch(() => {});
+    }
+  } else if (!localDeleteOk) {
+    throw new Error(
+      'File system is read-only and no GitHub token is configured. Cannot delete file in production.',
+    );
   }
 
   return { path: safePath };

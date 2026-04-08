@@ -118,21 +118,51 @@ export async function POST(request: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const hasGitHub = Boolean(process.env.CMS_GITHUB_TOKEN);
+    const hasGitHub = Boolean(
+      process.env.CMS_GITHUB_TOKEN &&
+      process.env.CMS_GITHUB_OWNER &&
+      process.env.CMS_GITHUB_REPO,
+    );
 
-    // Always write to local filesystem first for instant preview
+    // Try to write to the local filesystem (works in dev / self-hosted).
+    // On read-only deployments (e.g. Vercel) this will throw EROFS and we
+    // fall back to GitHub as the primary store.
     const absolutePath = path.resolve(PUBLIC_ROOT, relativePath);
 
     if (!absolutePath.startsWith(PUBLIC_ROOT + path.sep) && absolutePath !== PUBLIC_ROOT) {
       return NextResponse.json({ error: 'Invalid upload path.' }, { status: 400 });
     }
 
-    await fs.mkdir(path.dirname(absolutePath), { recursive: true });
-    await fs.writeFile(absolutePath, buffer);
+    let localWriteOk = false;
+    try {
+      await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+      await fs.writeFile(absolutePath, buffer);
+      localWriteOk = true;
+    } catch (err: unknown) {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code !== 'EROFS' && code !== 'EACCES' && code !== 'EPERM') throw err;
+      // Read-only filesystem — will rely on GitHub below
+    }
 
-    // Fire-and-forget GitHub sync for persistence — don't block the response
     if (hasGitHub) {
-      void uploadToGitHub(`public/${relativePath}`, buffer).catch(() => {});
+      if (!localWriteOk) {
+        // Production read-only FS: push to GitHub synchronously and return
+        // the raw.githubusercontent.com CDN URL so the image is immediately live.
+        await uploadToGitHub(`public/${relativePath}`, buffer);
+        const owner = process.env.CMS_GITHUB_OWNER!;
+        const repo  = process.env.CMS_GITHUB_REPO!;
+        const branch = process.env.CMS_GITHUB_BRANCH ?? 'main';
+        const cdnUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/public/${relativePath}`;
+        return NextResponse.json({ url: cdnUrl });
+      } else {
+        // Dev / local: local write succeeded, sync GitHub in background
+        void uploadToGitHub(`public/${relativePath}`, buffer).catch(() => {});
+      }
+    } else if (!localWriteOk) {
+      return NextResponse.json(
+        { error: 'File system is read-only and no GitHub token is configured. Set CMS_GITHUB_TOKEN, CMS_GITHUB_OWNER, and CMS_GITHUB_REPO to enable uploads in production.' },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json({ url: publicPath });
