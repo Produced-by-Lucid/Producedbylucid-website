@@ -168,6 +168,53 @@ export async function writeEditableContentFile(relativePath: string, content: st
   return { path: safePath };
 }
 
+async function deleteEditableContentFileFromGitHub(safePath: string): Promise<void> {
+  const token = process.env.CMS_GITHUB_TOKEN;
+  const owner = process.env.CMS_GITHUB_OWNER;
+  const repo = process.env.CMS_GITHUB_REPO;
+  const branch = process.env.CMS_GITHUB_BRANCH ?? 'main';
+
+  if (!token || !owner || !repo) return;
+
+  const apiUrl = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/content/${safePath}`;
+  const authHeaders: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+
+  // Get current SHA (required to delete via GitHub API)
+  const getResponse = await fetch(`${apiUrl}?ref=${encodeURIComponent(branch)}`, { headers: authHeaders });
+  if (!getResponse.ok) return; // file doesn't exist on GitHub, nothing to delete
+
+  const fileData = (await getResponse.json()) as { sha?: string };
+  if (!fileData.sha) return;
+
+  const deleteResponse = await fetch(apiUrl, {
+    method: 'DELETE',
+    headers: { ...authHeaders, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: `cms: delete ${safePath}`, sha: fileData.sha, branch }),
+  });
+
+  if (!deleteResponse.ok) {
+    const errorData = (await deleteResponse.json().catch(() => ({}))) as { message?: string };
+    const message = errorData.message ?? 'Unable to delete file on GitHub.';
+    throw new Error(formatGitHubPersistenceError(deleteResponse.status, message, owner, repo));
+  }
+}
+
+export async function deleteEditableContentFile(relativePath: string) {
+  const { absolutePath, safePath } = resolveContentPath(relativePath);
+
+  await fs.unlink(absolutePath);
+
+  if (process.env.CMS_GITHUB_TOKEN) {
+    void deleteEditableContentFileFromGitHub(safePath).catch(() => {});
+  }
+
+  return { path: safePath };
+}
+
 export function cmsPasswordIsValid(password: string | null) {
   const expectedPassword = process.env.CMS_DASHBOARD_PASSWORD;
 

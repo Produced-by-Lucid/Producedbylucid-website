@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
+import { BlogBlockRenderer } from '@/components/BlogBlockRenderer';
+import BlogFooter from '@/components/BlogFooter';
+import ShareBar from '@/components/ShareBar';
 import { getPostBySlug, getPosts, getSiteSettings } from '@/lib/site-content';
 
 // Always re-read content files from disk so CMS edits are reflected immediately
@@ -47,40 +49,56 @@ export async function generateMetadata({ params }: JournalPostPageProps): Promis
 
 export default async function JournalPostPage({ params }: JournalPostPageProps) {
   const { slug } = await params;
-  const post = await getPostBySlug(slug).catch(() => null);
+  const [post, allPosts, settings] = await Promise.all([
+    getPostBySlug(slug).catch(() => null),
+    getPosts(),
+    getSiteSettings(),
+  ]);
 
   if (!post) {
     notFound();
   }
 
+  const morePosts = allPosts.filter((p) => p.slug !== slug).slice(0, 3);
+
   return (
-    <main className="min-h-screen bg-[#0d1f14] px-4 py-10 text-cream sm:px-6 sm:py-16">
-      <div className="mx-auto flex max-w-4xl flex-col gap-8">
-        <Link href="/" className="text-sm uppercase tracking-[0.25em] text-[#DB612D]">
-          Back to home
-        </Link>
+    <>
+      <main className="min-h-screen bg-[#0d1f14] px-4 py-10 text-cream sm:px-6 sm:py-16">
+        <div className="mx-auto flex max-w-4xl flex-col gap-8">
+          <div className="space-y-4">
+            <p className="text-xs uppercase tracking-[0.3em] text-[#DB612D]">{post.meta}</p>
+            <h1 className="text-4xl font-bold leading-tight sm:text-6xl">{post.title}</h1>
+            <p className="max-w-2xl text-base text-cream/70 sm:text-lg">{post.excerpt}</p>
+          </div>
 
-        <div className="space-y-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-[#DB612D]">{post.meta}</p>
-          <h1 className="text-4xl font-bold leading-tight sm:text-6xl">{post.title}</h1>
-          <p className="max-w-2xl text-base text-cream/70 sm:text-lg">{post.excerpt}</p>
-        </div>
+          <ShareBar title={post.title} />
 
-        <div className="relative h-[40vh] overflow-hidden rounded-3xl sm:h-[56vh]">
-          <Image src={post.coverImage} alt={post.title} fill className="object-cover" sizes="100vw" />
-        </div>
+          <div className="relative my-6 h-[40vh] overflow-hidden rounded-3xl sm:my-10 sm:h-[56vh]">
+            <Image src={post.coverImage} alt={post.title} fill className="object-cover" sizes="100vw" />
+          </div>
 
         <article className="max-w-3xl space-y-6 text-base leading-8 text-cream/85 sm:text-lg">
-          <ReactMarkdown
-            components={{
-              h2: ({ children }) => <h2 className="pt-6 text-2xl font-semibold text-white">{children}</h2>,
-              p: ({ children }) => <p>{children}</p>,
-            }}
-          >
-            {post.body}
-          </ReactMarkdown>
+          {post.html ? (
+            <div
+              className="prose-blog"
+              dangerouslySetInnerHTML={{ __html: post.html }}
+            />
+          ) : post.blocks && post.blocks.length > 0 ? (
+            <BlogBlockRenderer blocks={post.blocks} />
+          ) : (
+            <ReactMarkdown
+              components={{
+                h2: ({ children }) => <h2 className="pt-6 text-2xl font-semibold text-white">{children}</h2>,
+                p: ({ children }) => <p>{children}</p>,
+              }}
+            >
+              {post.body}
+            </ReactMarkdown>
+          )}
         </article>
-      </div>
-    </main>
+        </div>
+      </main>
+      <BlogFooter settings={settings} morePosts={morePosts} />
+    </>
   );
 }

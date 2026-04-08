@@ -167,7 +167,7 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
   };
 
   return (
-    <section id="projects" ref={sectionRef} className="relative flex min-h-[75vh] scroll-mt-24 items-center justify-center overflow-hidden  px-4 py-14  sm:min-h-[110vh] sm:pb-[20vh]">
+    <section id="projects" ref={sectionRef} className="relative flex min-h-[75vh]   scroll-mt-24 items-center justify-center overflow-hidden  px-4 pb-14  sm:min-h-[110vh] sm:pb-[20vh]">
       <div className="relative z-10 w-full ">
                 <p className="section-title-text mb-8 text-center text-xs font-semibold uppercase tracking-[0.45em] text-[#1b5e3f] sm:text-sm sm:tracking-[0.8em]">{eyebrow}</p>
 

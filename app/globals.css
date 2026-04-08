@@ -11,6 +11,26 @@
   .border-cream { border-color: #FFE1CD; }
 }
 
+/* Rich-text blog post content (from Tiptap html field) */
+.prose-blog { color: rgba(255,225,205,0.85); line-height: 1.8; }
+.prose-blog p { margin-bottom: 1rem; }
+.prose-blog h2 { font-family: var(--font-display), sans-serif; font-size: 1.6rem; font-weight: 700; color: #fff; margin: 2rem 0 0.6rem; }
+.prose-blog h3 { font-family: var(--font-display), sans-serif; font-size: 1.25rem; font-weight: 600; color: #fff; margin: 1.5rem 0 0.5rem; }
+.prose-blog strong { font-weight: 700; color: #fff; }
+.prose-blog em { font-style: italic; }
+.prose-blog u { text-decoration: underline; }
+.prose-blog a { color: #DB612D; text-decoration: underline; text-underline-offset: 3px; transition: color 0.2s; }
+.prose-blog a:hover { color: #e88a5e; }
+.prose-blog ul { list-style: disc; padding-left: 1.5rem; margin: 0.75rem 0; }
+.prose-blog ol { list-style: decimal; padding-left: 1.5rem; margin: 0.75rem 0; }
+.prose-blog li { margin-bottom: 0.3rem; }
+.prose-blog blockquote { border-left: 3px solid #DB612D; padding-left: 1rem; margin: 1.25rem 0; color: rgba(255,225,205,0.6); font-style: italic; }
+.prose-blog code { background: rgba(255,255,255,0.08); border-radius: 4px; padding: 0.1em 0.35em; font-size: 0.87em; font-family: Consolas, Monaco, monospace; }
+.prose-blog pre { background: #0a1a10; border-radius: 10px; padding: 1rem 1.2rem; overflow-x: auto; margin: 1rem 0; }
+.prose-blog pre code { background: none; padding: 0; font-size: 0.875rem; color: #a8d5b5; }
+.prose-blog img { max-width: 100%; border-radius: 10px; display: block; margin: 1.5rem auto; }
+.prose-blog hr { border: none; border-top: 1px solid rgba(255,255,255,0.12); margin: 2rem 0; }
+
 html {
   scroll-behavior: smooth;
 }
@@ -196,3 +216,93 @@ h1, h2, h3, h4, h5, h6, button {
 .projects-linear-track:hover .projects-linear-card:not(:hover) :is(.projects-linear-image, .projects-linear-video) {
   filter: grayscale(100%);
 }
+
+/* ── Tiptap blog editor ─────────────────────────────────────────────────── */
+.blog-rich-editor .ProseMirror {
+  outline: none;
+  min-height: 340px;
+  padding: 1rem 1.1rem;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: #1a2530;
+}
+.blog-rich-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #adb5bd;
+  pointer-events: none;
+  height: 0;
+}
+.blog-rich-editor .ProseMirror h2 { font-size: 1.3rem !important; font-weight: 700 !important; margin: 1rem 0 0.35rem !important; font-family: inherit !important; }
+.blog-rich-editor .ProseMirror h3 { font-size: 1.1rem !important; font-weight: 600 !important; margin: 0.8rem 0 0.3rem !important; font-family: inherit !important; }
+.blog-rich-editor .ProseMirror ul { list-style: disc !important; padding-left: 1.5rem; margin: 0.4rem 0; }
+.blog-rich-editor .ProseMirror ol { list-style: decimal !important; padding-left: 1.5rem; margin: 0.4rem 0; }
+.blog-rich-editor .ProseMirror li { margin-bottom: 0.15rem; }
+.blog-rich-editor .ProseMirror strong { font-weight: 700 !important; }
+.blog-rich-editor .ProseMirror em { font-style: italic !important; }
+.blog-rich-editor .ProseMirror u { text-decoration: underline !important; }
+.blog-rich-editor .ProseMirror a { color: #DB612D; text-decoration: underline; cursor: pointer; }
+.blog-rich-editor .ProseMirror blockquote {
+  border-left: 3px solid #DB612D;
+  padding-left: 0.9rem;
+  margin: 0.75rem 0;
+  color: #5a6b7c;
+  font-style: italic;
+}
+.blog-rich-editor .ProseMirror code {
+  background: #f0f2f5;
+  border-radius: 4px;
+  padding: 0.1em 0.3em;
+  font-size: 0.87em;
+  font-family: Consolas, Monaco, monospace;
+}
+.blog-rich-editor .ProseMirror pre {
+  background: #1a2530;
+  color: #e0e8f0;
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+  margin: 0.6rem 0;
+}
+.blog-rich-editor .ProseMirror pre code { background: none; padding: 0; font-size: 0.875rem; }
+.blog-rich-editor .ProseMirror img { max-width: 100%; border-radius: 8px; display: block; margin: 0.5rem auto; }
+.blog-rich-editor .ProseMirror hr { border: none; border-top: 2px solid #e3e8ee; margin: 1rem 0; }
+.blog-rich-editor .ProseMirror p { margin: 0 0 0.5rem; }
+
+.slash-menu {
+  position: fixed;
+  z-index: 9999;
+  background: #fff;
+  border: 1px solid #e0e6ec;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.14);
+  padding: 0.35rem;
+  width: 220px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.slash-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.42rem 0.6rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 80ms;
+}
+.slash-menu-item:hover, .slash-menu-item.active { background: #f0f5fa; }
+.slash-menu-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #eef2f7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #3a4a5a;
+  flex-shrink: 0;
+}
+.slash-menu-label { font-size: 0.82rem; font-weight: 600; color: #1a2530; }
+.slash-menu-hint  { font-size: 0.72rem; color: #8a9ab0; }
