@@ -65,7 +65,6 @@ export default function Nav({ navItems, cta }: NavProps) {
                                     <line x1="0" y1="1" x2="100" y2="1" stroke="currentColor" strokeWidth="0.5" />
                                 </svg>
                             ) : null} */}
-                            
                         </div>
                     ))}
                 </div>
