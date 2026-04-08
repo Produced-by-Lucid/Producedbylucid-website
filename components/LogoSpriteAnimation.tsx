@@ -83,8 +83,8 @@ export default function LogoSpriteAnimation({ className = '' }: { className?: st
       <Image
         src={frames[currentFrame]}
         alt="Lucid logo animation"
-        width={500}
-        height={500}
+        width={300}
+        height={300}
         priority
         unoptimized
       />
