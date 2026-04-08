@@ -25,6 +25,12 @@
       "type": "quote",
       "text": "This was awesome!",
       "attribution": ""
+    },
+    {
+      "type": "image",
+      "src": "/posts/143A3972.jpg",
+      "alt": "",
+      "width": "medium"
     }
   ]
 }
