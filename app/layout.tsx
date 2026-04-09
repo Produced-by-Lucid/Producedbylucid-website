@@ -8,6 +8,7 @@ import "@fontsource/zilla-slab/600.css";
 import "@fontsource/zilla-slab/700.css";
 import { getSiteSettings } from "@/lib/site-content";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next"
 
 const castio = localFont({
   src: [
@@ -120,6 +121,7 @@ export default function RootLayout({
 
   return (
     <html lang="en">
+      <Analytics/>  
       <body suppressHydrationWarning className={bodyClassName}>
         {children}
       </body>
