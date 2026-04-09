@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { v2 as cloudinary } from 'cloudinary';
+import type { UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
 import { cmsPasswordIsValid } from '@/lib/cms-files';
 
 export const runtime = 'nodejs';
@@ -20,75 +22,48 @@ function sanitizeFilename(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, '_');
 }
 
-async function uploadToGitHub(filePath: string, buffer: Buffer): Promise<void> {
-  const token = process.env.CMS_GITHUB_TOKEN;
-  const owner = process.env.CMS_GITHUB_OWNER;
-  const repo = process.env.CMS_GITHUB_REPO;
-  const branch = process.env.CMS_GITHUB_BRANCH ?? 'main';
+async function uploadToCloudinary(
+  buffer: Buffer,
+  folder: string,
+  filename: string,
+): Promise<string> {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
-  if (!token || !owner || !repo) {
-    throw new Error('GitHub persistence is not configured for uploads.');
+  if (!cloudName || !apiKey || !apiSecret) {
+    throw new Error(
+      'Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.',
+    );
   }
 
-  const apiUrl = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${filePath}`;
+  cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
 
-  const authHeaders: Record<string, string> = {
-    Authorization: `Bearer ${token}`,
-    Accept: 'application/vnd.github+json',
-    'X-GitHub-Api-Version': '2022-11-28',
-  };
+  const ext = path.extname(filename).toLowerCase();
+  const resourceType =
+    ext === '.mp4' || ext === '.webm' ? 'video' : 'image';
 
-  const getResponse = await fetch(`${apiUrl}?ref=${encodeURIComponent(branch)}`, {
-    headers: authHeaders,
+  // Cloudinary public_id should not include the extension
+  const baseName = filename.replace(/\.[^.]+$/, '');
+
+  return new Promise<string>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: folder || undefined,
+        public_id: baseName,
+        resource_type: resourceType,
+        overwrite: true,
+      },
+      (error: UploadApiErrorResponse | undefined, result: UploadApiResponse | undefined) => {
+        if (error || !result) {
+          reject(error ?? new Error('Cloudinary upload failed.'));
+        } else {
+          resolve(result.secure_url);
+        }
+      },
+    );
+    stream.end(buffer);
   });
-
-  let sha: string | undefined;
-  if (getResponse.ok) {
-    const fileData = (await getResponse.json()) as { sha?: string };
-    sha = fileData.sha;
-  } else if (getResponse.status !== 404) {
-    throw new Error('Unable to access file on GitHub.');
-  }
-
-  const body: Record<string, unknown> = {
-    message: `cms: upload ${filePath}`,
-    content: buffer.toString('base64'),
-    branch,
-  };
-
-  if (sha !== undefined) {
-    body.sha = sha;
-  }
-
-  let putResponse = await fetch(apiUrl, {
-    method: 'PUT',
-    headers: { ...authHeaders, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-  // On a 409 SHA conflict (stale SHA due to a concurrent upload), re-fetch the
-  // latest SHA and retry once.
-  if (putResponse.status === 409) {
-    const retryGet = await fetch(`${apiUrl}?ref=${encodeURIComponent(branch)}`, {
-      headers: authHeaders,
-    });
-
-    if (retryGet.ok) {
-      const retryFileData = (await retryGet.json()) as { sha?: string };
-      if (retryFileData.sha) {
-        body.sha = retryFileData.sha;
-        putResponse = await fetch(apiUrl, {
-          method: 'PUT',
-          headers: { ...authHeaders, 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-      }
-    }
-  }
-
-  if (!putResponse.ok) {
-    throw new Error('Unable to upload file to GitHub.');
-  }
 }
 
 export async function POST(request: Request) {
@@ -133,59 +108,47 @@ export async function POST(request: Request) {
       ? folder.trim().replace(/^\/+|\/+$/g, '').replace(/\.\./g, '')
       : '';
 
-    const relativePath = targetFolder ? `${targetFolder}/${safeName}` : safeName;
-    const publicPath = `/${relativePath}`;
-
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const hasGitHub = Boolean(
-      process.env.CMS_GITHUB_TOKEN &&
-      process.env.CMS_GITHUB_OWNER &&
-      process.env.CMS_GITHUB_REPO,
+    const hasCloudinary = Boolean(
+      process.env.CLOUDINARY_CLOUD_NAME &&
+      process.env.CLOUDINARY_API_KEY &&
+      process.env.CLOUDINARY_API_SECRET,
     );
 
-    // Try to write to the local filesystem (works in dev / self-hosted).
-    // On read-only deployments (e.g. Vercel) this will throw EROFS and we
-    // fall back to GitHub as the primary store.
+    if (hasCloudinary) {
+      // Upload to Cloudinary and return the CDN URL directly.
+      const url = await uploadToCloudinary(buffer, targetFolder, safeName);
+      return NextResponse.json({ url });
+    }
+
+    // Fallback: write to local public/ directory (development without Cloudinary).
+    const relativePath = targetFolder ? `${targetFolder}/${safeName}` : safeName;
     const absolutePath = path.resolve(PUBLIC_ROOT, relativePath);
 
     if (!absolutePath.startsWith(PUBLIC_ROOT + path.sep) && absolutePath !== PUBLIC_ROOT) {
       return NextResponse.json({ error: 'Invalid upload path.' }, { status: 400 });
     }
 
-    let localWriteOk = false;
     try {
       await fs.mkdir(path.dirname(absolutePath), { recursive: true });
       await fs.writeFile(absolutePath, buffer);
-      localWriteOk = true;
     } catch (err: unknown) {
       const code = (err as NodeJS.ErrnoException).code;
-      if (code !== 'EROFS' && code !== 'EACCES' && code !== 'EPERM') throw err;
-      // Read-only filesystem — will rely on GitHub below
-    }
-
-    if (hasGitHub) {
-      if (!localWriteOk) {
-        // Production read-only FS: push to GitHub synchronously and return
-        // the raw.githubusercontent.com CDN URL so the image is immediately live.
-        await uploadToGitHub(`public/${relativePath}`, buffer);
-        const owner = process.env.CMS_GITHUB_OWNER!;
-        const repo  = process.env.CMS_GITHUB_REPO!;
-        const branch = process.env.CMS_GITHUB_BRANCH ?? 'main';
-        const cdnUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/public/${relativePath}`;
-        return NextResponse.json({ url: cdnUrl });
-      } else {
-        // Dev / local: local write succeeded, sync GitHub in background
-        void uploadToGitHub(`public/${relativePath}`, buffer).catch(() => {});
+      if (code === 'EROFS' || code === 'EACCES' || code === 'EPERM') {
+        return NextResponse.json(
+          {
+            error:
+              'File system is read-only and Cloudinary is not configured. ' +
+              'Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET to enable uploads in production.',
+          },
+          { status: 500 },
+        );
       }
-    } else if (!localWriteOk) {
-      return NextResponse.json(
-        { error: 'File system is read-only and no GitHub token is configured. Set CMS_GITHUB_TOKEN, CMS_GITHUB_OWNER, and CMS_GITHUB_REPO to enable uploads in production.' },
-        { status: 500 },
-      );
+      throw err;
     }
 
-    return NextResponse.json({ url: publicPath });
+    return NextResponse.json({ url: `/${relativePath}` });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Upload failed.';
     return NextResponse.json({ error: message }, { status: 500 });
