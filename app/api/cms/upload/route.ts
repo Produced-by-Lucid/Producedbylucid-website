@@ -60,11 +60,31 @@ async function uploadToGitHub(filePath: string, buffer: Buffer): Promise<void> {
     body.sha = sha;
   }
 
-  const putResponse = await fetch(apiUrl, {
+  let putResponse = await fetch(apiUrl, {
     method: 'PUT',
     headers: { ...authHeaders, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
+
+  // On a 409 SHA conflict (stale SHA due to a concurrent upload), re-fetch the
+  // latest SHA and retry once.
+  if (putResponse.status === 409) {
+    const retryGet = await fetch(`${apiUrl}?ref=${encodeURIComponent(branch)}`, {
+      headers: authHeaders,
+    });
+
+    if (retryGet.ok) {
+      const retryFileData = (await retryGet.json()) as { sha?: string };
+      if (retryFileData.sha) {
+        body.sha = retryFileData.sha;
+        putResponse = await fetch(apiUrl, {
+          method: 'PUT',
+          headers: { ...authHeaders, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      }
+    }
+  }
 
   if (!putResponse.ok) {
     throw new Error('Unable to upload file to GitHub.');
