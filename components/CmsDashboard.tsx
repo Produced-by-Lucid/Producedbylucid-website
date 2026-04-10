@@ -16,6 +16,8 @@ type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
 type SidebarTab = 'pages' | 'settings';
 type SectionDefinition = { key: string; label: string; description?: string };
 type UploadResponse = { url?: string; error?: string };
+type AnalyticsPoint = { date: string; pageViews: number; visitors: number };
+type AnalyticsResponse = { points?: AnalyticsPoint[]; source?: string; error?: string };
 
 // ---------------------------------------------------------------------------
 // Image/video detection — used to decide when to render the image upload UI
@@ -718,6 +720,11 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
   const [savingFile, setSavingFile] = useState<string | null>(null); // Which file in multi-view is currently saving
   const [panelWidth, setPanelWidth] = useState(440); // Current panel width (resizable)
   const [resizing, setResizing] = useState(false); // Whether the user is dragging the resize handle
+  const [analyticsOpen, setAnalyticsOpen] = useState(false); // Analytics panel mode
+  const [analyticsDays, setAnalyticsDays] = useState<7 | 14 | 30>(14); // Lookback window in days
+  const [analyticsLoading, setAnalyticsLoading] = useState(false); // Loading analytics response
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null); // Analytics fetch error
+  const [analyticsPoints, setAnalyticsPoints] = useState<AnalyticsPoint[]>([]); // Day-level analytics points
 
   // --- Refs ---
   const formScrollRef = useRef<HTMLDivElement>(null);   // Scrollable container for the form editor
@@ -924,6 +931,43 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     return '/';
   }, [selectedFile]);
 
+  const analyticsTotals = useMemo(() => {
+    return analyticsPoints.reduce(
+      (acc, point) => {
+        acc.pageViews += point.pageViews;
+        acc.visitors += point.visitors;
+        return acc;
+      },
+      { pageViews: 0, visitors: 0 },
+    );
+  }, [analyticsPoints]);
+
+  const analyticsMaxY = useMemo(() => {
+    return analyticsPoints.reduce((maxValue, point) => Math.max(maxValue, point.pageViews, point.visitors), 0);
+  }, [analyticsPoints]);
+
+  const pageViewsPath = useMemo(() => {
+    if (analyticsPoints.length < 2 || analyticsMaxY <= 0) return '';
+    return analyticsPoints
+      .map((point, index) => {
+        const x = (index / (analyticsPoints.length - 1)) * 100;
+        const y = 100 - (point.pageViews / analyticsMaxY) * 100;
+        return `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
+      })
+      .join(' ');
+  }, [analyticsPoints, analyticsMaxY]);
+
+  const visitorsPath = useMemo(() => {
+    if (analyticsPoints.length < 2 || analyticsMaxY <= 0) return '';
+    return analyticsPoints
+      .map((point, index) => {
+        const x = (index / (analyticsPoints.length - 1)) * 100;
+        const y = 100 - (point.visitors / analyticsMaxY) * 100;
+        return `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
+      })
+      .join(' ');
+  }, [analyticsPoints, analyticsMaxY]);
+
   // --- API functions ---
 
   /** Fetches the list of editable content files from the server. Auto-selects home page or first file. */
@@ -982,6 +1026,30 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
       setError(loadError instanceof Error ? loadError.message : 'Unable to load file.');
     } finally {
       setLoadingContent(false);
+    }
+  }
+
+  async function loadAnalytics(days: 7 | 14 | 30) {
+    setAnalyticsLoading(true);
+    setAnalyticsError(null);
+
+    try {
+      const response = await fetch(`/api/cms/analytics?days=${days}`, {
+        headers: { 'x-cms-password': password },
+      });
+      const body = (await response.json()) as AnalyticsResponse;
+
+      if (!response.ok) {
+        throw new Error(body.error ?? 'Unable to load Vercel analytics data.');
+      }
+
+      setAnalyticsPoints(Array.isArray(body.points) ? body.points : []);
+      setStatus(null);
+    } catch (loadError) {
+      setAnalyticsPoints([]);
+      setAnalyticsError(loadError instanceof Error ? loadError.message : 'Unable to load Vercel analytics data.');
+    } finally {
+      setAnalyticsLoading(false);
     }
   }
 
@@ -1080,7 +1148,18 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     setSelectedFile(filePath);
     setPendingSectionScroll(null);
     setGridView(null);
+    setAnalyticsOpen(false);
     setPanelOpen(true);
+  }
+
+  function openAnalyticsPanel() {
+    setActiveSidebarTab('settings');
+    setGridView(null);
+    setSelectedFile(null);
+    setPendingSectionScroll(null);
+    setAnalyticsOpen(true);
+    setPanelOpen(true);
+    void loadAnalytics(analyticsDays);
   }
 
   /** Selects the home page file, switches to the form editor, and queues a scroll to the given section. */
@@ -1617,24 +1696,44 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                 ) : null}
               </>
             ) : (
-              <button
-                type="button"
-                onClick={() => selectFile(SITE_SETTINGS_FILE)}
-                style={{
-                  width: '100%',
-                  textAlign: 'left',
-                  border: 'none',
-                  background: selectedFile === SITE_SETTINGS_FILE ? '#f0f2f5' : 'transparent',
-                  color: selectedFile === SITE_SETTINGS_FILE ? '#132030' : '#3a4a5a',
-                  borderRadius: 8,
-                  padding: '0.4rem 0.45rem',
-                  cursor: 'pointer',
-                  fontSize: '0.78rem',
-                  fontWeight: selectedFile === SITE_SETTINGS_FILE ? 600 : 500,
-                }}
-              >
-                Site settings
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                <button
+                  type="button"
+                  onClick={() => selectFile(SITE_SETTINGS_FILE)}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    border: 'none',
+                    background: selectedFile === SITE_SETTINGS_FILE && !analyticsOpen ? '#f0f2f5' : 'transparent',
+                    color: selectedFile === SITE_SETTINGS_FILE && !analyticsOpen ? '#132030' : '#3a4a5a',
+                    borderRadius: 8,
+                    padding: '0.4rem 0.45rem',
+                    cursor: 'pointer',
+                    fontSize: '0.78rem',
+                    fontWeight: selectedFile === SITE_SETTINGS_FILE && !analyticsOpen ? 600 : 500,
+                  }}
+                >
+                  Site settings
+                </button>
+                <button
+                  type="button"
+                  onClick={openAnalyticsPanel}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    border: 'none',
+                    background: analyticsOpen ? '#f0f2f5' : 'transparent',
+                    color: analyticsOpen ? '#132030' : '#3a4a5a',
+                    borderRadius: 8,
+                    padding: '0.4rem 0.45rem',
+                    cursor: 'pointer',
+                    fontSize: '0.78rem',
+                    fontWeight: analyticsOpen ? 600 : 500,
+                  }}
+                >
+                  Vercel analytics
+                </button>
+              </div>
             )}
           </div>
 
@@ -1659,7 +1758,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
         </nav>
 
         {/* ── Floating form editor panel (appears on section click) ── */}
-        {panelOpen && (selectedFile || gridView) ? (
+        {panelOpen && (selectedFile || gridView || analyticsOpen) ? (
           <div
             ref={panelRef}
             style={{
@@ -1715,11 +1814,19 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
                 <LuGripVertical size={14} style={{ color: '#b0b8c1', flexShrink: 0 }} />
                 <span style={{ fontWeight: 700, fontSize: '0.82rem', color: '#132030', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {gridView ? (gridView === 'projects' ? 'Featured Projects' : 'Testimonials') : selectedFile === HOME_PAGE_FILE ? 'Home' : selectedFile ? contentLabel(selectedFile) : ''}
+                  {analyticsOpen
+                    ? 'Vercel Analytics'
+                    : gridView
+                      ? (gridView === 'projects' ? 'Featured Projects' : 'Testimonials')
+                      : selectedFile === HOME_PAGE_FILE
+                        ? 'Home'
+                        : selectedFile
+                          ? contentLabel(selectedFile)
+                          : ''}
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
-                {gridView ? (
+                {analyticsOpen ? null : gridView ? (
                   <button
                     type="button"
                     onClick={() => void saveAllMultiFiles()}
@@ -1764,7 +1871,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                 ) : null}
                 <button
                   type="button"
-                  onClick={() => { setPanelOpen(false); setGridView(null); }}
+                  onClick={() => { setPanelOpen(false); setGridView(null); setAnalyticsOpen(false); }}
                   title="Close editor panel"
                   style={{
                     border: 'none',
@@ -1784,7 +1891,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
             </div>
 
             {/* Form / Code tab switcher (JSON files only, not blog posts which get the block editor) */}
-            {!isMdFile && !isBlogPost && selectedFile ? (
+            {!analyticsOpen && !isMdFile && !isBlogPost && selectedFile ? (
               <div style={{ display: 'flex', padding: '0 0.7rem', borderBottom: '1px solid #edf0f3', flexShrink: 0 }}>
                 {(['form', 'code'] as const).map((tab) => (
                   <button
@@ -1811,7 +1918,89 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
 
             {/* Scrollable editor body */}
             <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '0.65rem 0.7rem' }}>
-              {gridView ? (
+              {analyticsOpen ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                  <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                    {[7, 14, 30].map((days) => (
+                      <button
+                        key={days}
+                        type="button"
+                        onClick={() => {
+                          const nextDays = days as 7 | 14 | 30;
+                          setAnalyticsDays(nextDays);
+                          void loadAnalytics(nextDays);
+                        }}
+                        style={{
+                          border: '1px solid #d4dde6',
+                          borderRadius: 999,
+                          padding: '0.25rem 0.6rem',
+                          fontSize: '0.76rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          background: analyticsDays === days ? '#132030' : '#fff',
+                          color: analyticsDays === days ? '#fff' : '#3a4a5a',
+                        }}
+                      >
+                        {days}d
+                      </button>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.55rem' }}>
+                    <div style={{ border: '1px solid #e5ebf1', borderRadius: 12, padding: '0.6rem' }}>
+                      <div style={{ fontSize: '0.72rem', color: '#8090a1', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Page Views</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#132030' }}>{analyticsTotals.pageViews.toLocaleString()}</div>
+                    </div>
+                    <div style={{ border: '1px solid #e5ebf1', borderRadius: 12, padding: '0.6rem' }}>
+                      <div style={{ fontSize: '0.72rem', color: '#8090a1', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Visitors</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#132030' }}>{analyticsTotals.visitors.toLocaleString()}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ border: '1px solid #e5ebf1', borderRadius: 12, padding: '0.7rem', background: '#fcfdff' }}>
+                    {analyticsLoading ? (
+                      <p style={{ color: '#4a6276', margin: 0, fontSize: '0.84rem' }}>Loading analytics data...</p>
+                    ) : analyticsPoints.length < 2 ? (
+                      <p style={{ color: '#6f7f90', margin: 0, fontSize: '0.84rem' }}>
+                        Not enough analytics data to draw a chart yet.
+                      </p>
+                    ) : (
+                      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ width: '100%', height: 180, display: 'block' }}>
+                        <line x1="0" y1="100" x2="100" y2="100" stroke="#e3eaf1" strokeWidth="0.8" />
+                        <path d={visitorsPath} fill="none" stroke="#2f77c6" strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
+                        <path d={pageViewsPath} fill="none" stroke="#de692e" strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
+                      </svg>
+                    )}
+                    <div style={{ display: 'flex', gap: '0.7rem', marginTop: '0.35rem', fontSize: '0.75rem', color: '#5f7184' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 10, height: 2, background: '#de692e', display: 'inline-block' }} /> Page Views</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 10, height: 2, background: '#2f77c6', display: 'inline-block' }} /> Visitors</span>
+                    </div>
+                  </div>
+
+                  <div style={{ border: '1px solid #e5ebf1', borderRadius: 12, overflow: 'hidden' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ background: '#f8fafc' }}>
+                          <th style={{ textAlign: 'left', padding: '0.45rem 0.6rem', fontSize: '0.74rem', color: '#6f7f90' }}>Date</th>
+                          <th style={{ textAlign: 'right', padding: '0.45rem 0.6rem', fontSize: '0.74rem', color: '#6f7f90' }}>Page Views</th>
+                          <th style={{ textAlign: 'right', padding: '0.45rem 0.6rem', fontSize: '0.74rem', color: '#6f7f90' }}>Visitors</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {analyticsPoints.map((point) => (
+                          <tr key={point.date}>
+                            <td style={{ padding: '0.45rem 0.6rem', borderTop: '1px solid #edf1f5', fontSize: '0.78rem', color: '#33485c' }}>{point.date}</td>
+                            <td style={{ textAlign: 'right', padding: '0.45rem 0.6rem', borderTop: '1px solid #edf1f5', fontSize: '0.78rem', color: '#33485c' }}>{point.pageViews.toLocaleString()}</td>
+                            <td style={{ textAlign: 'right', padding: '0.45rem 0.6rem', borderTop: '1px solid #edf1f5', fontSize: '0.78rem', color: '#33485c' }}>{point.visitors.toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {analyticsError ? <p style={{ color: '#9f2538', margin: 0, fontSize: '0.8rem' }}>{analyticsError}</p> : null}
+                </div>
+              ) : gridView ? (
                 loadingMulti ? (
                   <p style={{ color: '#4a6276', padding: '0.5rem 0', fontSize: '0.85rem' }}>Loading all items...</p>
                 ) : (
