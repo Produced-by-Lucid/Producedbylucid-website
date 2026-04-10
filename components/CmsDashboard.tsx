@@ -703,6 +703,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
   const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('pages');    // Pages vs Settings sidebar tab
   const [homeOpen, setHomeOpen] = useState(true);        // Home page accordion expanded
   const [blogOpen, setBlogOpen] = useState(true);        // Blog accordion expanded
+  const [projectsOpen, setProjectsOpen] = useState(false); // Projects accordion expanded
   const [libraryOpen, setLibraryOpen] = useState(false);  // Content library accordion expanded
   const [pendingSectionScroll, setPendingSectionScroll] = useState<string | null>(null); // Section to scroll to after content loads
 
@@ -1452,6 +1453,112 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                     </button>
                   )}
                 </div>
+
+                {/* Projects */}
+                {projectFiles.length > 0 ? (
+                  <div style={{ marginBottom: '0.3rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => setProjectsOpen((c) => !c)}
+                      style={{
+                        width: '100%',
+                        border: 'none',
+                        background: 'none',
+                        textAlign: 'left',
+                        padding: '0.35rem 0.25rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        color: '#142131',
+                        fontWeight: 700,
+                        fontSize: '0.75rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                      }}
+                    >
+                      Projects
+                      {projectsOpen ? <LuChevronDown size={12} style={{ color: '#a0aab4' }} /> : <LuChevronRight size={12} style={{ color: '#a0aab4' }} />}
+                    </button>
+                    {projectsOpen
+                      ? projectFiles.map((fp) => (
+                          <div
+                            key={fp}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.2rem',
+                              borderRadius: 8,
+                              background: selectedFile === fp ? '#f0f2f5' : 'transparent',
+                            }}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => selectFile(fp)}
+                              title={fp}
+                              style={{
+                                flex: 1,
+                                textAlign: 'left',
+                                border: 'none',
+                                background: 'transparent',
+                                color: selectedFile === fp ? '#132030' : '#3a4a5a',
+                                borderRadius: 8,
+                                padding: '0.35rem 0.45rem',
+                                cursor: 'pointer',
+                                fontSize: '0.78rem',
+                                fontWeight: selectedFile === fp ? 600 : 500,
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                minWidth: 0,
+                              }}
+                            >
+                              {contentLabel(fp)}
+                            </button>
+                            <button
+                              type="button"
+                              title="Delete project"
+                              onClick={async () => {
+                                const label = contentLabel(fp);
+                                if (!window.confirm(`Delete "${label}"? This cannot be undone.`)) return;
+                                try {
+                                  const res = await fetch(`/api/cms/files/${encodeURI(fp)}`, {
+                                    method: 'DELETE',
+                                    headers: { 'x-cms-password': password },
+                                  });
+                                  if (!res.ok) {
+                                    const data = (await res.json()) as { error?: string };
+                                    setError(data.error ?? 'Failed to delete project.');
+                                    return;
+                                  }
+                                  if (selectedFile === fp) setSelectedFile(null);
+                                  await loadFiles();
+                                } catch {
+                                  setError('Failed to delete project.');
+                                }
+                              }}
+                              style={{
+                                flexShrink: 0,
+                                border: 'none',
+                                background: 'transparent',
+                                color: '#c0392b',
+                                cursor: 'pointer',
+                                padding: '0.3rem 0.4rem',
+                                borderRadius: 6,
+                                display: 'flex',
+                                alignItems: 'center',
+                                opacity: 0.6,
+                              }}
+                              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
+                              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.6'; }}
+                            >
+                              <LuTrash2 size={13} />
+                            </button>
+                          </div>
+                        ))
+                      : null}
+                  </div>
+                ) : null}
 
                 {/* Library */}
                 {libraryFiles.length > 0 ? (
