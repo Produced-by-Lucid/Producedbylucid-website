@@ -2,7 +2,7 @@
   "hero": {
     "mobileHeadline": "Bold ideas.\nElevated experiences.",
     "curvedHeadline": "bold ideas. elevated experiences",
-    "eyebrow": "Experience Design Company ",
+    "eyebrow": "Experience Design Company",
     "description": "For the Coolest Brands",
     "primaryCtaLabel": "Talk To Us",
     "primaryCtaUrl": "https://calendly.com/produced_by_lucid/event-consultation"
@@ -13,15 +13,15 @@
     "description": "With clarity, creativity, and precision at our core, we transform bold ideas into elevated experiences.\n",
     "slides": [
       {
-        "image": "/slider-imgs/pr-img-1.png",
+        "image": "/slider-imgs/143A4153.jpg",
         "title": ""
       },
       {
-        "image": "/slider-imgs/143A4153.jpg",
-        "title": "Corporate Event Gala"
+        "image": "/Rectangle-272.png",
+        "title": ""
       },
       {
-        "image": "/Rectangle-272.png",
+        "image": "https://raw.githubusercontent.com/produced-by-lucid/producedbylucid-website/main/public/Bamboo___5_Anniversary.jpg",
         "title": ""
       }
     ]
