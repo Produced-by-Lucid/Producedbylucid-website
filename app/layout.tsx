@@ -8,7 +8,7 @@ import "@fontsource/zilla-slab/600.css";
 import "@fontsource/zilla-slab/700.css";
 import { getSiteSettings } from "@/lib/site-content";
 import "./globals.css";
-import { Analytics } from "@vercel/analytics/next"
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
 const castio = localFont({
   src: [
@@ -121,7 +121,16 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <Analytics/>  
+      {GA_MEASUREMENT_ID ? (
+        <head>
+          <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} />
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');`,
+            }}
+          />
+        </head>
+      ) : null}
       <body suppressHydrationWarning className={bodyClassName}>
         {children}
       </body>

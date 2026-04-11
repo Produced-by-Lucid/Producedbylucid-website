@@ -187,7 +187,11 @@ export async function writeEditableContentFile(relativePath: string, content: st
     localWriteOk = true;
   } catch (err: unknown) {
     const code = (err as NodeJS.ErrnoException).code;
-    if (code !== 'EROFS' && code !== 'EACCES' && code !== 'EPERM') throw err;
+    // EROFS/EACCES/EPERM = explicitly read-only FS (e.g. Vercel serverless).
+    // ENOENT on a write means the path doesn't exist on the deployed FS — also
+    // indicates a read-only deployment environment (Vercel throws ENOENT instead
+    // of EROFS when creating new files under /var/task/).
+    if (code !== 'EROFS' && code !== 'EACCES' && code !== 'EPERM' && code !== 'ENOENT') throw err;
     // Read-only filesystem — will use GitHub as primary below
   }
 

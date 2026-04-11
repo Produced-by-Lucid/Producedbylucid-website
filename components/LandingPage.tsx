@@ -150,7 +150,8 @@ export default function LandingPage({
 
         <TestimonialsSection heading={testimonialsSection.curvedHeading} testimonials={testimonials} />
 
-        {blogSection ? (
+        {/* Blog section temporarily hidden */}
+        {false && blogSection ? (
           <SectionsInViewMotion>
             <BlogPosts eyebrow={blogSection.eyebrow} heading={blogSection.heading} posts={posts} />
           </SectionsInViewMotion>
