@@ -2,7 +2,7 @@
 
 import '@fontsource-variable/instrument-sans/index.css';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
-import { LuRefreshCw, LuPanelLeftClose, LuPanelLeftOpen, LuArrowLeft, LuGripVertical, LuX, LuSave, LuChevronDown, LuChevronRight, LuLogOut, LuRotateCw, LuPencil, LuPlus, LuTrash2, LuFileText, LuSettings } from 'react-icons/lu';
+import { LuRefreshCw, LuPanelLeftClose, LuPanelLeftOpen, LuArrowLeft, LuGripVertical, LuX, LuSave, LuChevronDown, LuChevronRight, LuLogOut, LuRotateCw, LuPencil, LuPlus, LuTrash2, LuFileText, LuSettings, LuBell } from 'react-icons/lu';
 import BlogEditor from './BlogEditor';
 
 // ---------------------------------------------------------------------------
@@ -13,7 +13,9 @@ type FileListResponse = { files: string[]; error?: string };
 type FileResponse = { path: string; content: string; error?: string };
 type JsonObject = { [key: string]: JsonValue };
 type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
-type SidebarTab = 'pages' | 'settings';
+type SidebarTab = 'pages' | 'settings' | 'notifications';
+type CmsNotification = { id: number; message: string; type: 'success' | 'error' | 'info'; time: string };
+type CmsToast = { id: number; message: string; type: 'success' | 'error' | 'info' };
 type SectionDefinition = { key: string; label: string; description?: string };
 type UploadResponse = { url?: string; error?: string };
 type AnalyticsPoint = { date: string; pageViews: number; visitors: number };
@@ -777,12 +779,15 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
   const [analyticsLoading, setAnalyticsLoading] = useState(false); // Loading analytics response
   const [analyticsError, setAnalyticsError] = useState<string | null>(null); // Analytics fetch error
   const [analyticsPoints, setAnalyticsPoints] = useState<AnalyticsPoint[]>([]); // Day-level analytics points
+  const [notifications, setNotifications] = useState<CmsNotification[]>([]);    // Activity log shown in notifications tab
+  const [toasts, setToasts] = useState<CmsToast[]>([]);                         // Slide-in corner toasts
 
   // --- Refs ---
   const formScrollRef = useRef<HTMLDivElement>(null);   // Scrollable container for the form editor
   const panelRef = useRef<HTMLDivElement>(null);        // The floating panel element
   const [dragging, setDragging] = useState(false);      // Whether the user is currently dragging the panel
   const dragOffsetRef = useRef({ x: 0, y: 0 });        // Offset from mouse to panel top-left when drag started
+  const notifIdRef = useRef(0);                         // Auto-incrementing ID for notifications/toasts
 
   // --- Effect: load file list on mount ---
   useEffect(() => {
@@ -1131,9 +1136,12 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
       }
 
       setStatus(`Saved ${selectedFile} at ${new Date().toLocaleTimeString()}`);
+      addNotification(`Saved: ${selectedFile}`, 'success');
       setPreviewKey((k) => k + 1);
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Unable to save file.');
+      const errMsg = saveError instanceof Error ? saveError.message : 'Unable to save file.';
+      setError(errMsg);
+      addNotification(errMsg, 'error');
     } finally {
       setSaving(false);
     }
@@ -1158,9 +1166,12 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
       const body = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(body.error ?? 'Unable to save.');
       setStatus(`Saved ${filePath} at ${new Date().toLocaleTimeString()}`);
+      addNotification(`Saved: ${filePath}`, 'success');
       setPreviewKey((k) => k + 1);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to save.');
+      const errMsg = err instanceof Error ? err.message : 'Unable to save.';
+      setError(errMsg);
+      addNotification(errMsg, 'error');
     } finally {
       setSavingFile(null);
     }
@@ -1187,9 +1198,12 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
         }),
       );
       setStatus(`Saved all at ${new Date().toLocaleTimeString()}`);
+      addNotification(`Saved all ${gridView ?? ''} files`, 'success');
       setPreviewKey((k) => k + 1);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to save.');
+      const errMsg = err instanceof Error ? err.message : 'Unable to save.';
+      setError(errMsg);
+      addNotification(errMsg, 'error');
     } finally {
       setSaving(false);
     }
@@ -1242,6 +1256,17 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     }
   }
 
+  /** Appends an entry to the activity log and shows a temporary corner toast. */
+  function addNotification(message: string, type: 'success' | 'error' | 'info' = 'info') {
+    const id = ++notifIdRef.current;
+    const time = new Date().toLocaleTimeString();
+    setNotifications((prev) => [{ id, message, type, time }, ...prev].slice(0, 100));
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4000);
+  }
+
   // --- Render ---
   // Minimal layout: full-screen preview, slim sidebar nav strip on the left,
   // and a separate floating form panel that appears when a section is clicked.
@@ -1253,6 +1278,10 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
         .cms-dashboard h4, .cms-dashboard h5, .cms-dashboard h6,
         .cms-dashboard button, .cms-dashboard label, .cms-dashboard a {
           font-family: inherit;
+        }
+        @keyframes cms-toast-in {
+          from { transform: translateX(24px); opacity: 0; }
+          to   { transform: translateX(0);   opacity: 1; }
         }
       `}</style>
 
@@ -1345,13 +1374,13 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
             </div>
           </div>
 
-          {/* Pages / Settings toggle */}
+          {/* Pages / Settings / Notifications toggle */}
           <div style={{ padding: '0.45rem 0.65rem 0.35rem', display: 'flex', gap: '0.2rem' }}>
-            {(['pages', 'settings'] as const).map((tab) => (
+            {(['pages', 'settings', 'notifications'] as const).map((tab) => (
               <button
                 key={tab}
                 type="button"
-                title={tab === 'pages' ? 'Pages' : 'Settings'}
+                title={tab === 'pages' ? 'Pages' : tab === 'settings' ? 'Settings' : 'Activity'}
                 onClick={() => setActiveSidebarTab(tab)}
                 style={{
                   flex: 1,
@@ -1364,9 +1393,26 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  position: 'relative',
                 }}
               >
-                {tab === 'pages' ? <LuFileText size={15} /> : <LuSettings size={15} />}
+                {tab === 'pages' ? <LuFileText size={15} /> : tab === 'settings' ? <LuSettings size={15} /> : (
+                  <>
+                    <LuBell size={15} />
+                    {notifications.length > 0 && activeSidebarTab !== 'notifications' && (
+                      <span style={{
+                        position: 'absolute',
+                        top: 3,
+                        right: 5,
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: '#e74c3c',
+                        pointerEvents: 'none',
+                      }} />
+                    )}
+                  </>
+                )}
               </button>
             ))}
           </div>
@@ -1503,13 +1549,17 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                                 });
                                 if (!res.ok) {
                                   const data = (await res.json()) as { error?: string };
-                                  setError(data.error ?? 'Failed to delete post.');
+                                  const errMsg = data.error ?? 'Failed to delete post.';
+                                  setError(errMsg);
+                                  addNotification(errMsg, 'error');
                                   return;
                                 }
                                 if (selectedFile === fp) setSelectedFile(null);
                                 await loadFiles();
+                                addNotification(`Deleted post: ${blogLabel(fp)}`, 'info');
                               } catch {
                                 setError('Failed to delete post.');
+                                addNotification('Failed to delete post.', 'error');
                               }
                             }}
                             style={{
@@ -1559,8 +1609,10 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                           setFiles((prev) => [...prev, filePath].sort());
                           selectFile(filePath);
                           setContent(JSON.stringify(template, null, 2));
+                          addNotification(`Created post: ${safeName}`, 'success');
                         } catch {
                           setError('Failed to create new post.');
+                          addNotification('Failed to create new post.', 'error');
                         }
                       }}
                       style={{
@@ -1658,13 +1710,17 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                                 });
                                 if (!res.ok) {
                                   const data = (await res.json()) as { error?: string };
-                                  setError(data.error ?? 'Failed to delete project.');
+                                  const errMsg = data.error ?? 'Failed to delete project.';
+                                  setError(errMsg);
+                                  addNotification(errMsg, 'error');
                                   return;
                                 }
                                 if (selectedFile === fp) setSelectedFile(null);
                                 await loadFiles();
+                                addNotification(`Deleted project: ${contentLabel(fp)}`, 'info');
                               } catch {
                                 setError('Failed to delete project.');
+                                addNotification('Failed to delete project.', 'error');
                               }
                             }}
                             style={{
@@ -1715,8 +1771,10 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                           setFiles((prev) => [...prev, filePath].sort());
                           selectFile(filePath);
                           setContent(JSON.stringify(template, null, 2));
+                          addNotification(`Created project: ${safeName}`, 'success');
                         } catch {
                           setError('Failed to create new project.');
+                          addNotification('Failed to create new project.', 'error');
                         }
                       }}
                       style={{
@@ -1797,7 +1855,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                   </div>
                 ) : null}
               </>
-            ) : (
+            ) : activeSidebarTab === 'settings' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
                 <button
                   type="button"
@@ -1837,6 +1895,43 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                   Vercel Analytics
                 </button>
               </div>
+            ) : (
+              notifications.length === 0 ? (
+                <div style={{ padding: '1.2rem 0.5rem', textAlign: 'center', color: '#a0aab4', fontSize: '0.73rem' }}>
+                  No activity yet
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {notifications.map((n) => (
+                    <div key={n.id} style={{
+                      padding: '0.4rem 0.5rem',
+                      borderRadius: 8,
+                      background: n.type === 'error' ? '#fff5f5' : n.type === 'success' ? '#f0faf4' : '#f5f8ff',
+                      borderLeft: `3px solid ${n.type === 'error' ? '#e74c3c' : n.type === 'success' ? '#27ae60' : '#3498db'}`,
+                    }}>
+                      <div style={{ fontSize: '0.72rem', color: '#3a4a5a', lineHeight: 1.4 }}>{n.message}</div>
+                      <div style={{ fontSize: '0.64rem', color: '#a0aab4', marginTop: '0.1rem' }}>{n.time}</div>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setNotifications([])}
+                    style={{
+                      marginTop: '0.15rem',
+                      border: 'none',
+                      background: 'transparent',
+                      color: '#b0bac4',
+                      cursor: 'pointer',
+                      fontSize: '0.68rem',
+                      textAlign: 'center',
+                      padding: '0.25rem',
+                      width: '100%',
+                    }}
+                  >
+                    Clear all
+                  </button>
+                </div>
+              )
             )}
           </div>
 
@@ -2244,6 +2339,43 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
             </div>
           </div>
         ) : null}
+        {/* Toast notification stack — slides in from bottom-right */}
+        <div style={{
+          position: 'fixed',
+          bottom: 16,
+          right: 16,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: 8,
+          zIndex: 9999,
+          pointerEvents: 'none',
+        }}>
+          {toasts.map((toast) => (
+            <div
+              key={toast.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                background: toast.type === 'error' ? '#2d1212' : toast.type === 'success' ? '#0e2b1a' : '#121c2d',
+                color: toast.type === 'error' ? '#ffb3b3' : toast.type === 'success' ? '#a3f0c4' : '#b3cfff',
+                border: `1px solid ${toast.type === 'error' ? '#5c1e1e' : toast.type === 'success' ? '#1a5c35' : '#1c3558'}`,
+                borderRadius: 12,
+                padding: '0.55rem 0.9rem',
+                fontSize: '0.78rem',
+                fontWeight: 500,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.28)',
+                maxWidth: 320,
+                pointerEvents: 'auto',
+                animation: 'cms-toast-in 0.22s ease',
+                fontFamily: "'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif",
+              }}
+            >
+              {toast.message}
+            </div>
+          ))}
+        </div>
       </main>
     </>
   );
