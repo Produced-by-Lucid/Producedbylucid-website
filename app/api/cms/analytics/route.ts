@@ -117,7 +117,9 @@ export async function GET(request: Request) {
       const apiMessage = typeof body.error === 'string' ? body.error : typeof body.message === 'string' ? body.message : 'Unable to fetch analytics from Vercel.';
       return NextResponse.json(
         {
-          error: `${apiMessage} Check CMS_VERCEL_ANALYTICS_ENDPOINT, CMS_VERCEL_PROJECT_ID, and CMS_VERCEL_API_TOKEN.`,
+          error: `Vercel API returned ${response.status}: ${apiMessage}`,
+          vercelStatus: response.status,
+          vercelBody: body,
         },
         { status: response.status },
       );
