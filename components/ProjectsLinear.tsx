@@ -184,7 +184,7 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
           className="relative w-full p-3 cursor-grab active:cursor-grabbing select-none"
           style={{ WebkitUserDrag: 'none', userSelect: 'none', MozUserSelect: 'none' } as React.CSSProperties}
         >
-          <FollowMouseDrag targetRef={marqueeViewportRef} label="view" />
+          <FollowMouseDrag targetRef={marqueeViewportRef} label="Drag" showIcon={false} />
 
           <div ref={marqueeTrackRef} className="projects-linear-track mb-20 flex w-max items-stretch gap-[6vw] sm:gap-[10vw]">
             {loopCards.map((card, index) => (

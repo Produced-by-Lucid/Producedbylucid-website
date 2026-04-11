@@ -8,15 +8,17 @@ import { PiArrowUpRightLight } from "react-icons/pi";
 interface FollowMouseDragProps {
   targetRef: RefObject<HTMLElement | null>;
   label?: string;
+  showIcon?: boolean;
+  enabled?: boolean;
 }
 
-export default function FollowMouseDrag({ targetRef, label = 'DRAG' }: FollowMouseDragProps) {
+export default function FollowMouseDrag({ targetRef, label = 'DRAG', showIcon = true, enabled = true }: FollowMouseDragProps) {
   const cursorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const target = targetRef.current;
     const cursor = cursorRef.current;
-    if (!target || !cursor) return;
+    if (!target || !cursor || !enabled) return;
 
     // Keep positioning in viewport coordinates so the element can be centered exactly.
     gsap.set(cursor, { autoAlpha: 0, scale: 0.9, position: 'fixed', top: 0, left: 0, x: 0, y: 0 });
@@ -64,7 +66,7 @@ export default function FollowMouseDrag({ targetRef, label = 'DRAG' }: FollowMou
       className="fixed top-0 left-0 pointer-events-none z-100 flex items-center gap-2 rounded-full border border-white/55 bg-[#eb5510] px-6 py-4 text-xl font-semibold tracking-[0.2em] text-white backdrop-blur-md"
     >
       {label}
-      <PiArrowUpRightLight className="text-2xl" />
+      {showIcon && <PiArrowUpRightLight className="text-2xl" />}
     </div>
   );
 }
