@@ -150,11 +150,13 @@ export default function LandingPage({
 
         <TestimonialsSection heading={testimonialsSection.curvedHeading} testimonials={testimonials} />
 
-        {blogSection ? (
+        {/* Blog section temporarily hidden
+        {blogSection && (
           <SectionsInViewMotion>
             <BlogPosts eyebrow={blogSection.eyebrow} heading={blogSection.heading} posts={posts} />
           </SectionsInViewMotion>
-        ) : null}
+        )}
+        */}
         {/* Footer */}
         <footer id="contact" className="relative z-10 flex min-h-[60vh] scroll-mt-24 flex-col justify-end gap-14 bg-linear-to-b from-black 60% to-[#19532B] py-8 sm:gap-20 sm:py-12">
           <div className="w-full text-center space-y-8 text-cream/60">

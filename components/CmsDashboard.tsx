@@ -2,7 +2,7 @@
 
 import '@fontsource-variable/instrument-sans/index.css';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
-import { LuRefreshCw, LuPanelLeftClose, LuPanelLeftOpen, LuArrowLeft, LuGripVertical, LuX, LuSave, LuChevronDown, LuChevronRight, LuLogOut, LuRotateCw, LuPencil, LuPlus, LuTrash2 } from 'react-icons/lu';
+import { LuRefreshCw, LuPanelLeftClose, LuPanelLeftOpen, LuArrowLeft, LuGripVertical, LuX, LuSave, LuChevronDown, LuChevronRight, LuLogOut, LuRotateCw, LuPencil, LuPlus, LuTrash2, LuFileText, LuSettings } from 'react-icons/lu';
 import BlogEditor from './BlogEditor';
 
 // ---------------------------------------------------------------------------
@@ -1351,6 +1351,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
               <button
                 key={tab}
                 type="button"
+                title={tab === 'pages' ? 'Pages' : 'Settings'}
                 onClick={() => setActiveSidebarTab(tab)}
                 style={{
                   flex: 1,
@@ -1360,13 +1361,12 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                   borderRadius: 8,
                   padding: '0.3rem 0',
                   cursor: 'pointer',
-                  fontSize: '0.72rem',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                {tab === 'pages' ? 'Pages' : 'Settings'}
+                {tab === 'pages' ? <LuFileText size={15} /> : <LuSettings size={15} />}
               </button>
             ))}
           </div>
@@ -1813,6 +1813,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                     cursor: 'pointer',
                     fontSize: '0.78rem',
                     fontWeight: selectedFile === SITE_SETTINGS_FILE && !analyticsOpen ? 600 : 500,
+                    maxWidth: 16,
                   }}
                 >
                   Site settings
@@ -1833,7 +1834,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                     fontWeight: analyticsOpen ? 600 : 500,
                   }}
                 >
-                  Vercel analytics
+                  Vercel Analytics
                 </button>
               </div>
             )}
