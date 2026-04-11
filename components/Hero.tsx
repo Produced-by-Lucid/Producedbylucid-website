@@ -72,17 +72,17 @@ export default function Hero({ content }: HeroProps) {
   }, []);
 
   return (
-    <section id="home" ref={heroRef} className="relative  flex sm:min-h-[50vh]  w-full scroll-mt-40 min-h-[60vh] sm:pt-20  max-sm:-mb-30  flex-col items-center justify-between  px-4  py-16   ">
+    <section id="home" ref={heroRef} className="relative  flex sm:min-h-[40vh] -mb-20 w-full scroll-mt-40 min-h-[40vh] sm:pt-20 max-sm:mb-30 flex-col items-center justify-between px-4 py-16">
       {/* <Image src="/pbl-round.svg" alt="Lucid logo" width={200} height={100} className="z-1 outline relative " /> */}
 
       <div className="absolute -top-4">
         <LogoSpriteAnimation className="mb-6 flex items-center justify-center" />
       </div>
 
-      <h2 className="relative mb-10 mt-30 block whitespace-pre-line text-center sm:text-8xl  text-4xl font-extrabold uppercase   text-[#1B5E3F]! ">
+      <h2 className="relative mb-10 mt-40 block whitespace-pre-line text-center sm:text-8xl  text-4xl font-extrabold uppercase text-[#1B5E3F]! ">
         {content.mobileHeadline}
       </h2>
-      <div className="absolute inset-0 sm:-translate-y-20 -translate-y-40 hidden   min-h-[20vh] ">
+      <div className="absolute inset-0 sm:-translate-y-20 -translate-y-40 hidden min-h-[20vh]">
         <HeroCurvedHeadline svgRef={svgRef} curvedHeadline={content.curvedHeadline} />
       </div>
 
@@ -98,7 +98,7 @@ export default function Hero({ content }: HeroProps) {
           <p className="max-w-2xl text-base  leading-relaxed text-[#2a3a2a] sm:text-lg md:text-xl">
             {content.description}
           </p>
-          <a href={content.primaryCtaUrl} className="mt-6 inline-block  rounded-full bg-[#DB612D] px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#ffe8d9] hover:text-black">
+          <a href={content.primaryCtaUrl} className="mt-6 inline-block  rounded-full bg-[#DB612D]  px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#ffe8d9] hover:text-black">
             {content.primaryCtaLabel}
           </a>
         </div>

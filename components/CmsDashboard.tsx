@@ -16,6 +16,8 @@ type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
 type SidebarTab = 'pages' | 'settings';
 type SectionDefinition = { key: string; label: string; description?: string };
 type UploadResponse = { url?: string; error?: string };
+type AnalyticsPoint = { date: string; pageViews: number; visitors: number };
+type AnalyticsResponse = { points?: AnalyticsPoint[]; source?: string; error?: string };
 
 // ---------------------------------------------------------------------------
 // Image/video detection — used to decide when to render the image upload UI
@@ -53,11 +55,9 @@ const TESTIMONIALS_PREFIX = 'testimonials/';
 // Each "key" must match a top-level key in content/pages/home.json.
 const HOME_PAGE_SECTIONS: SectionDefinition[] = [
   { key: 'hero', label: 'Hero' },
-  { key: 'projectsSection', label: 'Featured Projects' },
   { key: 'featureShowcase', label: 'Intro' },
   { key: 'servicesSection', label: 'Services' },
   { key: 'testimonialsSection', label: 'Testimonials' },
-  { key: 'blogSection', label: 'Blog' },
   { key: 'footerSection', label: 'Footer' },
 ];
 
@@ -71,6 +71,7 @@ const inputBase: CSSProperties = {
   fontFamily: 'inherit',
   background: '#fbfdff',
   boxSizing: 'border-box',
+  marginBottom: 10,
 };
 
 // ---------------------------------------------------------------------------
@@ -125,17 +126,21 @@ function ImageField({
   value,
   onChange,
   password,
+  fieldKey = '',
 }: {
   value: string;
   onChange: (value: string) => void;
   password: string;
+  fieldKey?: string;
 }) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState(false);
   const [localPreview, setLocalPreview] = useState<string | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<{ name: string; size: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const isVideo = VIDEO_EXT_PATTERN.test(value) || /video/i.test(fieldKey);
   const folder = value.startsWith('/')
     ? value.substring(1, value.lastIndexOf('/'))
     : '';
@@ -181,6 +186,7 @@ function ImageField({
 
       if (body.url) {
         onChange(body.url);
+        setUploadedFile({ name: file.name, size: file.size });
       }
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : 'Upload failed.');
@@ -191,16 +197,36 @@ function ImageField({
     }
   }
 
+  const videoFileName = uploadedFile?.name ?? (value ? value.split('/').pop() : null);
+  const videoFileSize = uploadedFile ? `${(uploadedFile.size / 1024 / 1024).toFixed(2)} MB` : null;
+  const imageFileName = uploadedFile?.name ?? (value ? value.split('/').pop() : null);
+  const imageFileSize = uploadedFile ? `${(uploadedFile.size / 1024 / 1024).toFixed(2)} MB` : null;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-        <input
-          type="text"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          style={{ ...inputBase, flex: 1 }}
-          placeholder="/path/to/image.png"
-        />
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center',          
+ }}>
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          padding: '0.55rem 0.75rem',
+          borderRadius: 10,
+          border: '1px solid #d5dde6',
+          background: '#f5f7fa',
+          minWidth: 0,
+        }}>
+          <span style={{ fontSize: '1rem', flexShrink: 0 }}>{isVideo ? '🎬' : '🖼️'}</span>
+          <div style={{ minWidth: 0 }}>
+            <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600, color: '#132030', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {isVideo ? (videoFileName ?? 'No video') : (imageFileName ?? 'No image')}
+            </p>
+            {(isVideo ? videoFileSize : imageFileSize) ? (
+              <p style={{ margin: 0, fontSize: '0.72rem', color: '#8a96a3' }}>{isVideo ? videoFileSize : imageFileSize}</p>
+            ) : null}
+          </div>
+        </div>
         <input
           ref={fileInputRef}
           type="file"
@@ -240,6 +266,7 @@ function ImageField({
         <div
           style={{
             maxWidth: 200,
+            maxHeight: 300,
             borderRadius: 8,
             border: '1px solid #e3ebf3',
             overflow: 'hidden',
@@ -291,40 +318,98 @@ function Field({
 }) {
   if (typeof value === 'string') {
     if (isImageField(fieldKey, value)) {
-      return <ImageField value={value} onChange={(v) => onChange(v)} password={password} />;
+      return (
+        <div style={{ position: 'relative', marginBottom: 10 }}>
+          <span style={{
+            position: 'absolute',
+            top: '-0.52em',
+            left: '0.65rem',
+            background: '#fbfdff',
+            padding: '0 0.25rem',
+            fontSize: '0.7rem',
+            fontWeight: 700,
+            color: '#8a96a3',
+            textTransform: 'uppercase',
+            letterSpacing: '0.07em',
+            lineHeight: 1,
+            pointerEvents: 'none',
+            zIndex: 1,
+          }}>{formatKeyLabel(fieldKey)}</span>
+          <div style={{ border: '1px solid #d5dde6', borderRadius: 10, padding: '0.65rem 0.75rem', background: '#fbfdff', paddingTop: '0.95rem' }}>
+            <ImageField value={value} onChange={(v) => onChange(v)} password={password} fieldKey={fieldKey} />
+          </div>
+        </div>
+      );
     }
 
     const isLong = value.length > 80 || value.includes('\n');
 
+    const labelStyle: CSSProperties = {
+      position: 'absolute',
+      top: '-0.52em',
+      left: '0.65rem',
+      background: '#fbfdff',
+      padding: '0 0.25rem',
+      fontSize: '0.7rem',
+      fontWeight: 700,
+      color: '#8a96a3',
+      textTransform: 'uppercase',
+      letterSpacing: '0.07em',
+      lineHeight: 1,
+      pointerEvents: 'none',
+    };
+
     if (isLong) {
       return (
-        <textarea
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          rows={Math.min(Math.max(3, value.split('\n').length + 1), 12)}
-          style={{ ...inputBase, resize: 'vertical', lineHeight: 1.5 }}
-        />
+        <div style={{ position: 'relative' }}>
+          <span style={labelStyle}>{formatKeyLabel(fieldKey)}</span>
+          <textarea
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            rows={Math.min(Math.max(3, value.split('\n').length + 1), 12)}
+            style={{ ...inputBase, resize: 'vertical', lineHeight: 1.5, paddingTop: '0.85rem' }}
+          />
+        </div>
       );
     }
 
     return (
-      <input
-        type={value.startsWith('http') ? 'url' : 'text'}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        style={inputBase}
-      />
+      <div style={{ position: 'relative' }}>
+        <span style={labelStyle}>{formatKeyLabel(fieldKey)}</span>
+        <input
+          type={value.startsWith('http') ? 'url' : 'text'}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          style={inputBase}
+        />
+      </div>
     );
   }
 
   if (typeof value === 'number') {
     return (
-      <input
-        type="number"
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-        style={{ ...inputBase, width: 140 }}
-      />
+      <div style={{ position: 'relative', width: 140 }}>
+        <span style={{
+          position: 'absolute',
+          top: '-0.52em',
+          left: '0.65rem',
+          background: '#fbfdff',
+          padding: '0 0.25rem',
+          fontSize: '0.7rem',
+          fontWeight: 700,
+          color: '#8a96a3',
+          textTransform: 'uppercase',
+          letterSpacing: '0.07em',
+          lineHeight: 1,
+          pointerEvents: 'none',
+        }}>{formatKeyLabel(fieldKey)}</span>
+        <input
+          type="number"
+          value={value}
+          onChange={(event) => onChange(Number(event.target.value))}
+          style={{ ...inputBase, width: '100%' }}
+        />
+      </div>
     );
   }
 
@@ -490,21 +575,7 @@ function Field({
         }}
       >
         {Object.entries(objectValue).map(([key, nestedValue]) => (
-          <div key={key}>
-            <label
-              style={{
-                display: 'block',
-                fontWeight: 700,
-                fontSize: '0.78rem',
-                color: '#6b7b8c',
-                marginBottom: '0.38rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-              }}
-            >
-              {formatKeyLabel(key)}
-            </label>
-
+          <div key={key} style={{ marginTop: '0.5rem', marginBottom: '0.75rem' }}>
             <Field
               fieldKey={key}
               value={nestedValue}
@@ -597,33 +668,16 @@ function FormEditor({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
       {sections.map((section) => (
-        <section
-          key={section.key}
-          data-cms-section={section.key}
-          style={{
-            background: '#fff',
-            border: '1px solid #e7edf2',
-            borderRadius: 16,
-            padding: '1rem',
-            scrollMarginTop: '1rem',
-          }}
-        >
-          <div style={{ marginBottom: '0.9rem' }}>
-            <h3 style={{ margin: 0, fontSize: '1rem', color: '#132030' }}>{section.label}</h3>
-            {section.description ? (
-              <p style={{ margin: '0.35rem 0 0', color: '#697b8d', fontSize: '0.88rem' }}>{section.description}</p>
-            ) : null}
-          </div>
-
+        <div key={section.key} data-cms-section={section.key} style={{ scrollMarginTop: '1rem' }}>
           <Field
             fieldKey={section.key}
             value={data[section.key]}
             onChange={(nextValue) => onChange(JSON.stringify({ ...data, [section.key]: nextValue }, null, 2))}
             password={password}
           />
-        </section>
+        </div>
       ))}
     </div>
   );
@@ -718,6 +772,11 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
   const [savingFile, setSavingFile] = useState<string | null>(null); // Which file in multi-view is currently saving
   const [panelWidth, setPanelWidth] = useState(440); // Current panel width (resizable)
   const [resizing, setResizing] = useState(false); // Whether the user is dragging the resize handle
+  const [analyticsOpen, setAnalyticsOpen] = useState(false); // Analytics panel mode
+  const [analyticsDays, setAnalyticsDays] = useState<7 | 14 | 30>(14); // Lookback window in days
+  const [analyticsLoading, setAnalyticsLoading] = useState(false); // Loading analytics response
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null); // Analytics fetch error
+  const [analyticsPoints, setAnalyticsPoints] = useState<AnalyticsPoint[]>([]); // Day-level analytics points
 
   // --- Refs ---
   const formScrollRef = useRef<HTMLDivElement>(null);   // Scrollable container for the form editor
@@ -924,6 +983,43 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     return '/';
   }, [selectedFile]);
 
+  const analyticsTotals = useMemo(() => {
+    return analyticsPoints.reduce(
+      (acc, point) => {
+        acc.pageViews += point.pageViews;
+        acc.visitors += point.visitors;
+        return acc;
+      },
+      { pageViews: 0, visitors: 0 },
+    );
+  }, [analyticsPoints]);
+
+  const analyticsMaxY = useMemo(() => {
+    return analyticsPoints.reduce((maxValue, point) => Math.max(maxValue, point.pageViews, point.visitors), 0);
+  }, [analyticsPoints]);
+
+  const pageViewsPath = useMemo(() => {
+    if (analyticsPoints.length < 2 || analyticsMaxY <= 0) return '';
+    return analyticsPoints
+      .map((point, index) => {
+        const x = (index / (analyticsPoints.length - 1)) * 100;
+        const y = 100 - (point.pageViews / analyticsMaxY) * 100;
+        return `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
+      })
+      .join(' ');
+  }, [analyticsPoints, analyticsMaxY]);
+
+  const visitorsPath = useMemo(() => {
+    if (analyticsPoints.length < 2 || analyticsMaxY <= 0) return '';
+    return analyticsPoints
+      .map((point, index) => {
+        const x = (index / (analyticsPoints.length - 1)) * 100;
+        const y = 100 - (point.visitors / analyticsMaxY) * 100;
+        return `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
+      })
+      .join(' ');
+  }, [analyticsPoints, analyticsMaxY]);
+
   // --- API functions ---
 
   /** Fetches the list of editable content files from the server. Auto-selects home page or first file. */
@@ -982,6 +1078,30 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
       setError(loadError instanceof Error ? loadError.message : 'Unable to load file.');
     } finally {
       setLoadingContent(false);
+    }
+  }
+
+  async function loadAnalytics(days: 7 | 14 | 30) {
+    setAnalyticsLoading(true);
+    setAnalyticsError(null);
+
+    try {
+      const response = await fetch(`/api/cms/analytics?days=${days}`, {
+        headers: { 'x-cms-password': password },
+      });
+      const body = (await response.json()) as AnalyticsResponse;
+
+      if (!response.ok) {
+        throw new Error(body.error ?? 'Unable to load Vercel analytics data.');
+      }
+
+      setAnalyticsPoints(Array.isArray(body.points) ? body.points : []);
+      setStatus(null);
+    } catch (loadError) {
+      setAnalyticsPoints([]);
+      setAnalyticsError(loadError instanceof Error ? loadError.message : 'Unable to load Vercel analytics data.');
+    } finally {
+      setAnalyticsLoading(false);
     }
   }
 
@@ -1080,7 +1200,18 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     setSelectedFile(filePath);
     setPendingSectionScroll(null);
     setGridView(null);
+    setAnalyticsOpen(false);
     setPanelOpen(true);
+  }
+
+  function openAnalyticsPanel() {
+    setActiveSidebarTab('settings');
+    setGridView(null);
+    setSelectedFile(null);
+    setPendingSectionScroll(null);
+    setAnalyticsOpen(true);
+    setPanelOpen(true);
+    void loadAnalytics(analyticsDays);
   }
 
   /** Selects the home page file, switches to the form editor, and queues a scroll to the given section. */
@@ -1455,110 +1586,160 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                 </div>
 
                 {/* Projects */}
-                {projectFiles.length > 0 ? (
-                  <div style={{ marginBottom: '0.3rem' }}>
-                    <button
-                      type="button"
-                      onClick={() => setProjectsOpen((c) => !c)}
-                      style={{
-                        width: '100%',
-                        border: 'none',
-                        background: 'none',
-                        textAlign: 'left',
-                        padding: '0.35rem 0.25rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        color: '#142131',
-                        fontWeight: 700,
-                        fontSize: '0.75rem',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                      }}
-                    >
-                      Projects
-                      {projectsOpen ? <LuChevronDown size={12} style={{ color: '#a0aab4' }} /> : <LuChevronRight size={12} style={{ color: '#a0aab4' }} />}
-                    </button>
-                    {projectsOpen
-                      ? projectFiles.map((fp) => (
-                          <div
-                            key={fp}
+                <div style={{ marginBottom: '0.3rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setProjectsOpen((c) => !c)}
+                    style={{
+                      width: '100%',
+                      border: 'none',
+                      background: 'none',
+                      textAlign: 'left',
+                      padding: '0.35rem 0.25rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      color: '#142131',
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    Projects
+                    {projectsOpen ? <LuChevronDown size={12} style={{ color: '#a0aab4' }} /> : <LuChevronRight size={12} style={{ color: '#a0aab4' }} />}
+                  </button>
+                  {projectsOpen
+                    ? projectFiles.map((fp) => (
+                        <div
+                          key={fp}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.2rem',
+                            borderRadius: 8,
+                            background: selectedFile === fp ? '#f0f2f5' : 'transparent',
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => selectFile(fp)}
+                            title={fp}
                             style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.2rem',
+                              flex: 1,
+                              textAlign: 'left',
+                              border: 'none',
+                              background: 'transparent',
+                              color: selectedFile === fp ? '#132030' : '#3a4a5a',
                               borderRadius: 8,
-                              background: selectedFile === fp ? '#f0f2f5' : 'transparent',
+                              padding: '0.35rem 0.45rem',
+                              cursor: 'pointer',
+                              fontSize: '0.78rem',
+                              fontWeight: selectedFile === fp ? 600 : 500,
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              minWidth: 0,
                             }}
                           >
-                            <button
-                              type="button"
-                              onClick={() => selectFile(fp)}
-                              title={fp}
-                              style={{
-                                flex: 1,
-                                textAlign: 'left',
-                                border: 'none',
-                                background: 'transparent',
-                                color: selectedFile === fp ? '#132030' : '#3a4a5a',
-                                borderRadius: 8,
-                                padding: '0.35rem 0.45rem',
-                                cursor: 'pointer',
-                                fontSize: '0.78rem',
-                                fontWeight: selectedFile === fp ? 600 : 500,
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                minWidth: 0,
-                              }}
-                            >
-                              {contentLabel(fp)}
-                            </button>
-                            <button
-                              type="button"
-                              title="Delete project"
-                              onClick={async () => {
-                                const label = contentLabel(fp);
-                                if (!window.confirm(`Delete "${label}"? This cannot be undone.`)) return;
-                                try {
-                                  const res = await fetch(`/api/cms/files/${encodeURI(fp)}`, {
-                                    method: 'DELETE',
-                                    headers: { 'x-cms-password': password },
-                                  });
-                                  if (!res.ok) {
-                                    const data = (await res.json()) as { error?: string };
-                                    setError(data.error ?? 'Failed to delete project.');
-                                    return;
-                                  }
-                                  if (selectedFile === fp) setSelectedFile(null);
-                                  await loadFiles();
-                                } catch {
-                                  setError('Failed to delete project.');
+                            {contentLabel(fp)}
+                          </button>
+                          <button
+                            type="button"
+                            title="Delete project"
+                            onClick={async () => {
+                              const label = contentLabel(fp);
+                              if (!window.confirm(`Delete "${label}"? This cannot be undone.`)) return;
+                              try {
+                                const res = await fetch(`/api/cms/files/${encodeURI(fp)}`, {
+                                  method: 'DELETE',
+                                  headers: { 'x-cms-password': password },
+                                });
+                                if (!res.ok) {
+                                  const data = (await res.json()) as { error?: string };
+                                  setError(data.error ?? 'Failed to delete project.');
+                                  return;
                                 }
-                              }}
-                              style={{
-                                flexShrink: 0,
-                                border: 'none',
-                                background: 'transparent',
-                                color: '#c0392b',
-                                cursor: 'pointer',
-                                padding: '0.3rem 0.4rem',
-                                borderRadius: 6,
-                                display: 'flex',
-                                alignItems: 'center',
-                                opacity: 0.6,
-                              }}
-                              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
-                              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.6'; }}
-                            >
-                              <LuTrash2 size={13} />
-                            </button>
-                          </div>
-                        ))
-                      : null}
-                  </div>
-                ) : null}
+                                if (selectedFile === fp) setSelectedFile(null);
+                                await loadFiles();
+                              } catch {
+                                setError('Failed to delete project.');
+                              }
+                            }}
+                            style={{
+                              flexShrink: 0,
+                              border: 'none',
+                              background: 'transparent',
+                              color: '#c0392b',
+                              cursor: 'pointer',
+                              padding: '0.3rem 0.4rem',
+                              borderRadius: 6,
+                              display: 'flex',
+                              alignItems: 'center',
+                              opacity: 0.6,
+                            }}
+                            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
+                            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.6'; }}
+                          >
+                            <LuTrash2 size={13} />
+                          </button>
+                        </div>
+                      ))
+                    : null}
+                  {projectsOpen && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const slug = prompt('Enter a URL slug for the new project (e.g. my-new-project):');
+                        if (!slug) return;
+                        const safeName = slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/--+/g, '-');
+                        if (!safeName) return;
+                        const filePath = `${PROJECTS_PREFIX}${safeName}.json`;
+                        const template = {
+                          order: projectFiles.length + 1,
+                          company: '',
+                          title: '',
+                          date: String(new Date().getFullYear()),
+                          image: '',
+                          video: '',
+                          href: '#',
+                        };
+                        try {
+                          const res = await fetch(`/api/cms/files/${encodeURI(filePath)}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'x-cms-password': password },
+                            body: JSON.stringify({ content: JSON.stringify(template, null, 2) }),
+                          });
+                          if (!res.ok) throw new Error('Failed to create');
+                          setFiles((prev) => [...prev, filePath].sort());
+                          selectFile(filePath);
+                          setContent(JSON.stringify(template, null, 2));
+                        } catch {
+                          setError('Failed to create new project.');
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        border: '1px dashed #cdd5dc',
+                        background: 'transparent',
+                        color: '#6b7b8c',
+                        borderRadius: 8,
+                        padding: '0.35rem 0.45rem',
+                        cursor: 'pointer',
+                        fontSize: '0.74rem',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        marginTop: '0.15rem',
+                      }}
+                    >
+                      <LuPlus size={11} /> New Project
+                    </button>
+                  )}
+                </div>
 
                 {/* Library */}
                 {libraryFiles.length > 0 ? (
@@ -1617,24 +1798,44 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                 ) : null}
               </>
             ) : (
-              <button
-                type="button"
-                onClick={() => selectFile(SITE_SETTINGS_FILE)}
-                style={{
-                  width: '100%',
-                  textAlign: 'left',
-                  border: 'none',
-                  background: selectedFile === SITE_SETTINGS_FILE ? '#f0f2f5' : 'transparent',
-                  color: selectedFile === SITE_SETTINGS_FILE ? '#132030' : '#3a4a5a',
-                  borderRadius: 8,
-                  padding: '0.4rem 0.45rem',
-                  cursor: 'pointer',
-                  fontSize: '0.78rem',
-                  fontWeight: selectedFile === SITE_SETTINGS_FILE ? 600 : 500,
-                }}
-              >
-                Site settings
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                <button
+                  type="button"
+                  onClick={() => selectFile(SITE_SETTINGS_FILE)}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    border: 'none',
+                    background: selectedFile === SITE_SETTINGS_FILE && !analyticsOpen ? '#f0f2f5' : 'transparent',
+                    color: selectedFile === SITE_SETTINGS_FILE && !analyticsOpen ? '#132030' : '#3a4a5a',
+                    borderRadius: 8,
+                    padding: '0.4rem 0.45rem',
+                    cursor: 'pointer',
+                    fontSize: '0.78rem',
+                    fontWeight: selectedFile === SITE_SETTINGS_FILE && !analyticsOpen ? 600 : 500,
+                  }}
+                >
+                  Site settings
+                </button>
+                <button
+                  type="button"
+                  onClick={openAnalyticsPanel}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    border: 'none',
+                    background: analyticsOpen ? '#f0f2f5' : 'transparent',
+                    color: analyticsOpen ? '#132030' : '#3a4a5a',
+                    borderRadius: 8,
+                    padding: '0.4rem 0.45rem',
+                    cursor: 'pointer',
+                    fontSize: '0.78rem',
+                    fontWeight: analyticsOpen ? 600 : 500,
+                  }}
+                >
+                  Vercel analytics
+                </button>
+              </div>
             )}
           </div>
 
@@ -1659,7 +1860,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
         </nav>
 
         {/* ── Floating form editor panel (appears on section click) ── */}
-        {panelOpen && (selectedFile || gridView) ? (
+        {panelOpen && (selectedFile || gridView || analyticsOpen) ? (
           <div
             ref={panelRef}
             style={{
@@ -1668,6 +1869,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
               left: panelPos.x,
               width: panelWidth,
               maxWidth: 'calc(100vw - 24px)',
+              minHeight: '95vh',
               maxHeight: 'calc(100vh - 32px)',
               display: 'flex',
               flexDirection: 'column',
@@ -1715,11 +1917,19 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
                 <LuGripVertical size={14} style={{ color: '#b0b8c1', flexShrink: 0 }} />
                 <span style={{ fontWeight: 700, fontSize: '0.82rem', color: '#132030', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {gridView ? (gridView === 'projects' ? 'Featured Projects' : 'Testimonials') : selectedFile === HOME_PAGE_FILE ? 'Home' : selectedFile ? contentLabel(selectedFile) : ''}
+                  {analyticsOpen
+                    ? 'Vercel Analytics'
+                    : gridView
+                      ? (gridView === 'projects' ? 'Featured Projects' : 'Testimonials')
+                      : selectedFile === HOME_PAGE_FILE
+                        ? 'Home'
+                        : selectedFile
+                          ? contentLabel(selectedFile)
+                          : ''}
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
-                {gridView ? (
+                {analyticsOpen ? null : gridView ? (
                   <button
                     type="button"
                     onClick={() => void saveAllMultiFiles()}
@@ -1764,7 +1974,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                 ) : null}
                 <button
                   type="button"
-                  onClick={() => { setPanelOpen(false); setGridView(null); }}
+                  onClick={() => { setPanelOpen(false); setGridView(null); setAnalyticsOpen(false); }}
                   title="Close editor panel"
                   style={{
                     border: 'none',
@@ -1784,7 +1994,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
             </div>
 
             {/* Form / Code tab switcher (JSON files only, not blog posts which get the block editor) */}
-            {!isMdFile && !isBlogPost && selectedFile ? (
+            {!analyticsOpen && !isMdFile && !isBlogPost && selectedFile ? (
               <div style={{ display: 'flex', padding: '0 0.7rem', borderBottom: '1px solid #edf0f3', flexShrink: 0 }}>
                 {(['form', 'code'] as const).map((tab) => (
                   <button
@@ -1811,7 +2021,89 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
 
             {/* Scrollable editor body */}
             <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '0.65rem 0.7rem' }}>
-              {gridView ? (
+              {analyticsOpen ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                  <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                    {[7, 14, 30].map((days) => (
+                      <button
+                        key={days}
+                        type="button"
+                        onClick={() => {
+                          const nextDays = days as 7 | 14 | 30;
+                          setAnalyticsDays(nextDays);
+                          void loadAnalytics(nextDays);
+                        }}
+                        style={{
+                          border: '1px solid #d4dde6',
+                          borderRadius: 999,
+                          padding: '0.25rem 0.6rem',
+                          fontSize: '0.76rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          background: analyticsDays === days ? '#132030' : '#fff',
+                          color: analyticsDays === days ? '#fff' : '#3a4a5a',
+                        }}
+                      >
+                        {days}d
+                      </button>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.55rem' }}>
+                    <div style={{ border: '1px solid #e5ebf1', borderRadius: 12, padding: '0.6rem' }}>
+                      <div style={{ fontSize: '0.72rem', color: '#8090a1', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Page Views</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#132030' }}>{analyticsTotals.pageViews.toLocaleString()}</div>
+                    </div>
+                    <div style={{ border: '1px solid #e5ebf1', borderRadius: 12, padding: '0.6rem' }}>
+                      <div style={{ fontSize: '0.72rem', color: '#8090a1', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Visitors</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#132030' }}>{analyticsTotals.visitors.toLocaleString()}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ border: '1px solid #e5ebf1', borderRadius: 12, padding: '0.7rem', background: '#fcfdff' }}>
+                    {analyticsLoading ? (
+                      <p style={{ color: '#4a6276', margin: 0, fontSize: '0.84rem' }}>Loading analytics data...</p>
+                    ) : analyticsPoints.length < 2 ? (
+                      <p style={{ color: '#6f7f90', margin: 0, fontSize: '0.84rem' }}>
+                        Not enough analytics data to draw a chart yet.
+                      </p>
+                    ) : (
+                      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ width: '100%', height: 180, display: 'block' }}>
+                        <line x1="0" y1="100" x2="100" y2="100" stroke="#e3eaf1" strokeWidth="0.8" />
+                        <path d={visitorsPath} fill="none" stroke="#2f77c6" strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
+                        <path d={pageViewsPath} fill="none" stroke="#de692e" strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
+                      </svg>
+                    )}
+                    <div style={{ display: 'flex', gap: '0.7rem', marginTop: '0.35rem', fontSize: '0.75rem', color: '#5f7184' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 10, height: 2, background: '#de692e', display: 'inline-block' }} /> Page Views</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 10, height: 2, background: '#2f77c6', display: 'inline-block' }} /> Visitors</span>
+                    </div>
+                  </div>
+
+                  <div style={{ border: '1px solid #e5ebf1', borderRadius: 12, overflow: 'hidden' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ background: '#f8fafc' }}>
+                          <th style={{ textAlign: 'left', padding: '0.45rem 0.6rem', fontSize: '0.74rem', color: '#6f7f90' }}>Date</th>
+                          <th style={{ textAlign: 'right', padding: '0.45rem 0.6rem', fontSize: '0.74rem', color: '#6f7f90' }}>Page Views</th>
+                          <th style={{ textAlign: 'right', padding: '0.45rem 0.6rem', fontSize: '0.74rem', color: '#6f7f90' }}>Visitors</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {analyticsPoints.map((point) => (
+                          <tr key={point.date}>
+                            <td style={{ padding: '0.45rem 0.6rem', borderTop: '1px solid #edf1f5', fontSize: '0.78rem', color: '#33485c' }}>{point.date}</td>
+                            <td style={{ textAlign: 'right', padding: '0.45rem 0.6rem', borderTop: '1px solid #edf1f5', fontSize: '0.78rem', color: '#33485c' }}>{point.pageViews.toLocaleString()}</td>
+                            <td style={{ textAlign: 'right', padding: '0.45rem 0.6rem', borderTop: '1px solid #edf1f5', fontSize: '0.78rem', color: '#33485c' }}>{point.visitors.toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {analyticsError ? <p style={{ color: '#9f2538', margin: 0, fontSize: '0.8rem' }}>{analyticsError}</p> : null}
+                </div>
+              ) : gridView ? (
                 loadingMulti ? (
                   <p style={{ color: '#4a6276', padding: '0.5rem 0', fontSize: '0.85rem' }}>Loading all items...</p>
                 ) : (
