@@ -1,9 +1,10 @@
 {
   "hero": {
-    "mobileHeadline": "Bold ideas.\nElevated experiences.",
+    "headlinePrefix": "Bold ideas.",
+    "headlineSuffix": "Elevated experiences.",
     "curvedHeadline": "bold ideas. elevated experiences",
     "eyebrow": "Experience Design Company",
-    "description": "For the Coolest Brands",
+    "description": "Award winning event production agency designing the best experiences for the coolest brands .",
     "primaryCtaLabel": "Talk To Us",
     "primaryCtaUrl": "https://calendly.com/produced_by_lucid/event-consultation"
   },
@@ -27,7 +28,8 @@
     ]
   },
   "projectsSection": {
-    "eyebrow": "Featured Projects"
+    "eyebrow": "Featured Projects",
+    "heading": "Featured Work"
   },
   "servicesSection": {
     "eyebrow": "Our Services",
@@ -52,5 +54,26 @@
   "blogSection": {
     "eyebrow": "Blog Posts",
     "heading": "Latest Stories"
+  },
+  "teamSection": {
+    "heading": "Some of the most talented humans in the world work here",
+    "description": "Meet the team",
+    "members": [
+      {
+        "name": "Shalom",
+        "role": "Marketing Manager",
+        "image": "/shalom-pic.png"
+      },
+      {
+        "name": "Bethel",
+        "role": "Technical Production Manager",
+        "image": "/Produced_by_Lucid_Headshots0981_1.png"
+      },
+      {
+        "name": "June",
+        "role": "Visual Experience Designer",
+        "image": "/Produced_by_Lucid_Headshots0941_1_1_.png"
+      }
+    ]
   }
 }

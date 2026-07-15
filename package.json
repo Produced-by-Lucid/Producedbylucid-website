@@ -24,6 +24,7 @@
     "@tiptap/suggestion": "^3.22.2",
     "@vercel/analytics": "^2.0.1",
     "cloudinary": "^2.9.0",
+    "framer-motion": "^12.42.2",
     "gray-matter": "^4.0.3",
     "gsap": "^3.14.2",
     "next": "15.5.13",

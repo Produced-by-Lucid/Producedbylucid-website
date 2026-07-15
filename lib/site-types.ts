@@ -38,7 +38,8 @@ export type SiteSettings = {
 
 export type HomePageContent = {
   hero: {
-    mobileHeadline: string;
+    headlinePrefix: string;
+headlineSuffix: string;
     curvedHeadline: string;
     eyebrow: string;
     description: string;
@@ -56,8 +57,10 @@ export type HomePageContent = {
   };
   projectsSection: {
     eyebrow: string;
+    heading: string;
   };
   servicesSection: {
+    services: { title: string; content: string; }[];
     eyebrow: string;
     items: {
       title: string;
@@ -70,6 +73,17 @@ export type HomePageContent = {
   blogSection: {
     eyebrow: string;
     heading: string;
+  };
+  teamSection: {
+    heading: string;
+    description: string;
+    members: {
+      name: string;
+      role: string;
+      image: string;
+      instagram: string;
+      linkedIn: string;
+    }[];
   };
 };
 

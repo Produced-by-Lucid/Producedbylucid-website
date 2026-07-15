@@ -2,7 +2,8 @@
 
 :root {
   --color-cream: #FFE1CD;
-  --font-paragraph: "Zilla Slab", "Georgia", "Times New Roman", serif;
+  --font-paragraph: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
+  --font-display: "Zilla Slab", "Georgia", "Times New Roman", serif;
 }
 
 @layer base {
@@ -14,8 +15,8 @@
 /* Rich-text blog post content (from Tiptap html field) */
 .prose-blog { color: rgba(255,225,205,0.85); line-height: 1.8; }
 .prose-blog p { margin-bottom: 1rem; }
-.prose-blog h2 { font-family: var(--font-display), sans-serif; font-size: 1.6rem; font-weight: 700; color: #fff; margin: 2rem 0 0.6rem; }
-.prose-blog h3 { font-family: var(--font-display), sans-serif; font-size: 1.25rem; font-weight: 600; color: #fff; margin: 1.5rem 0 0.5rem; }
+.prose-blog h2 { font-family: var(--font-display), serif; font-size: 1.6rem; font-weight: 700; color: #fff; margin: 2rem 0 0.6rem; }
+.prose-blog h3 { font-family: var(--font-display), serif; font-size: 1.25rem; font-weight: 600; color: #fff; margin: 1.5rem 0 0.5rem; }
 .prose-blog strong { font-weight: 700; color: #fff; }
 .prose-blog em { font-style: italic; }
 .prose-blog u { text-decoration: underline; }
@@ -31,20 +32,37 @@
 .prose-blog img { max-width: 100%; border-radius: 10px; display: block; margin: 1.5rem auto; }
 .prose-blog hr { border: none; border-top: 1px solid rgba(255,255,255,0.12); margin: 2rem 0; }
 
-html {
-  scroll-behavior: smooth;
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
 }
 
 body {
   color: var(--color-cream);
-  font-family: var(--font-paragraph), serif;
+  font-family: var(--font-paragraph);
   margin: 0;
   padding: 0;
   overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6, button {
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-display), serif;
 }
 
 @keyframes twinkle-1 {
@@ -89,7 +107,7 @@ h1, h2, h3, h4, h5, h6, button {
 }
 
 .animate-scroll-x {
-  animation: scroll-x 36s linear infinite;
+  animation: scroll-x 50s linear infinite;
 }
 
 .projects-scene {

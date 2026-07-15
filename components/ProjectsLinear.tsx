@@ -7,6 +7,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import type { ProjectEntry } from '@/lib/site-types';
 import FollowMouseDrag from './FollowMouseDrag';
+import { FaArrowRight } from 'react-icons/fa';
 
 interface ProjectsLinearProps {
   cards: ProjectEntry[];
@@ -17,8 +18,6 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
   const sectionRef = useRef<HTMLElement>(null);
   const marqueeViewportRef = useRef<HTMLDivElement>(null);
   const marqueeTrackRef = useRef<HTMLDivElement>(null);
-  const curveItemRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const curveStateRef = useRef<{ y: number; r: number; s: number }[]>([]);
   const loopTweenRef = useRef<gsap.core.Tween | null>(null);
   const isDraggingRef = useRef(false);
   const isHoveringRef = useRef(false);
@@ -26,6 +25,7 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
   const activePointerIdRef = useRef<number | null>(null);
 
   const loopCards = useMemo(() => [...cards, ...cards], [cards]);
+ 
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -34,10 +34,7 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
 
     const section = sectionRef.current;
     const track = marqueeTrackRef.current;
-    const viewport = marqueeViewportRef.current;
-    if (!section || !track || !viewport) return;
-
-    let applyCurve: (() => void) | null = null;
+    if (!section || !track) return;
 
     const ctx = gsap.context(() => {
       gsap.fromTo(
@@ -56,54 +53,16 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
         }
       );
 
-      gsap.set(track, { xPercent: 0, force3D: true });
+      gsap.set(track, { xPercent: 0 });
       loopTweenRef.current = gsap.to(track, {
-        xPercent: -50,
+        xPercent: -90,
         duration: 34,
         ease: 'none',
         repeat: -1,
       });
-
-      applyCurve = () => {
-        const viewportRect = viewport.getBoundingClientRect();
-        const centerX = viewportRect.left + viewportRect.width / 2;
-        const halfWidth = Math.max(1, viewportRect.width / 2);
-
-        curveItemRefs.current.forEach((item, index) => {
-          if (!item) return;
-
-          const rect = item.getBoundingClientRect();
-          const itemCenter = rect.left + rect.width / 2;
-          const normalizedDistance = (itemCenter - centerX) / halfWidth;
-          const clampedDistance = Math.max(-1.15, Math.min(1.15, normalizedDistance));
-          const absDist = Math.abs(clampedDistance);
-
-          const targetY = Math.pow(absDist, 1.35) * 88;
-          const targetR = clampedDistance * 14;
-          const targetS = 1 - absDist * 0.08;
-
-          const prev = curveStateRef.current[index] ?? { y: targetY, r: targetR, s: targetS };
-          const next = {
-            y: prev.y + (targetY - prev.y) * 0.18,
-            r: prev.r + (targetR - prev.r) * 0.18,
-            s: prev.s + (targetS - prev.s) * 0.18,
-          };
-
-          curveStateRef.current[index] = next;
-          item.style.transform = `translate3d(0, ${next.y.toFixed(2)}px, 0) rotate(${next.r.toFixed(2)}deg) scale(${next.s.toFixed(3)})`;
-        });
-      };
-
-      gsap.ticker.add(applyCurve);
-      window.addEventListener('resize', applyCurve);
-      applyCurve();
     }, section);
 
     return () => {
-      if (applyCurve) {
-        gsap.ticker.remove(applyCurve);
-        window.removeEventListener('resize', applyCurve);
-      }
       loopTweenRef.current?.kill();
       loopTweenRef.current = null;
       ctx.revert();
@@ -167,9 +126,20 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
   };
 
   return (
-    <section id="projects" ref={sectionRef} className="relative flex min-h-[75vh]   scroll-mt-24 items-center justify-center overflow-hidden  px-4 pb-14  sm:min-h-[110vh] sm:pb-[20vh]">
-      <div className="relative z-10 w-full ">
-                <p className="section-title-text mb-8 text-center text-xs font-semibold uppercase tracking-[0.45em] text-[#1b5e3f] sm:text-sm sm:tracking-[0.8em]">{eyebrow}</p>
+    <section id="projects" ref={sectionRef} className="relative flex justify-center    min-h-[120vh] flex-1 z-3   items-center overflow-hidden sm:px-0    ">
+     
+      {/* <Image
+        src="/pattern-official.png"
+        alt="Divider Shape"
+        width={1920}
+        height={889}
+        className="absolute inset-0 w-screen  h-full object-cover"
+      /> */}
+
+      
+
+      <div className="relative z-10   w-full ">
+        <h2 className="section-title-text mb-8 text-center  font-semibold uppercase tracking-[0.45em]  sm:text-sm sm:tracking-[0.8em]">{eyebrow}</h2>
 
 
         <div
@@ -181,24 +151,37 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
           onDragStart={preventDragStart}
-          className="relative w-full p-3 cursor-grab active:cursor-grabbing select-none"
-          style={{ WebkitUserDrag: 'none', userSelect: 'none', MozUserSelect: 'none' } as React.CSSProperties}
+          className="relative w-full cursor-grab active:cursor-grabbing    select-none"
+          style={{
+            WebkitUserDrag: 'none',
+            userSelect: 'none',
+            MozUserSelect: 'none',
+          } as React.CSSProperties}
         >
-          <FollowMouseDrag targetRef={marqueeViewportRef} label="Drag" showIcon={false} />
+          <div
+            className="w-full  overflow-hidden"
+          >
+            {/* <FollowMouseDrag targetRef={marqueeViewportRef} hoverTargetSelector=".projects-linear-card" label="View" showIcon={false} enabled={false} /> */}
 
-          <div ref={marqueeTrackRef} className="projects-linear-track mb-20 flex w-max items-stretch gap-[6vw] sm:gap-[10vw]">
-            {loopCards.map((card, index) => (
-              <div
-                key={`${card.title}-${index}`}
-                ref={(element) => {
-                  curveItemRefs.current[index] = element;
-                }}
-                className="shrink-0 will-change-transform"
-              >
+            <div
+              ref={marqueeTrackRef}
+              className="projects-linear-track mb-20 pt-32 flex w-max items-center gap-[6vw] relative   justify-center sm:gap-[10vw]"
+              
+              
+            >
+              {loopCards.map((card, index) => (
+                <div
+                  key={`${card.title}-${index}`}
+                  className="shrink-0 will-change-transform"
+                >
+
+
                 <a href={card.href || '#'} className="block" draggable={false}>
-                  <article className="projects-linear-card group w-[82vw] cursor-none bg-white pt-2 px-2 shadow-5xl transition-[width,padding,box-shadow] duration-500 ease-out sm:w-88 sm:hover:w-xl sm:hover:p-3 sm:hover:shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
-                    
-                    <div className="relative h-[38vh] w-full overflow-hidden sm:h-[44vh]">
+                  <article
+                    className="projects-linear-card group w-[82vw] bg-[#fdf8ec] p-1 shadow-5xl transition-[width,padding,box-shadow] duration-400 ease-out sm:w-55 sm:hover:w-[26vw] sm:hover:p-3 sm:hover:shadow-[0_14px_50px_rgba(0,0,0,0.35)]"
+                  >
+
+                    <div className="relative h-[28vh] w-full overflow-hidden sm:h-[22vh] group-hover:sm:h-[34vh]">
                       {card.video && (
                         <video
                           src={card.video}
@@ -206,23 +189,26 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
                           muted
                           loop
                           playsInline
-                          className="projects-linear-video pointer-events-none absolute inset-0 z-10 h-full w-full object-cover group-hover:hidden"
+                          className="projects-linear-video  pointer-events-none absolute inset-0 z-10 h-full w-full object-cover group-hover:hidden"
                         />
                       )}
                       <Image src={card.image} alt={card.title} fill className="projects-linear-image pointer-events-none object-cover duration-200  group-hover:scale-120" sizes="(min-width: 1024px) 32rem, 78vw" draggable={false} />
                       <Image src={'/ribbon-cut.svg'} alt={'ribbon'} width={200} height={400} className=" group-hover:translate-y-0 duration-500  ease-cubic  absolute top-0 right-0 w-10 mr-4 -translate-y-full" draggable={false} />
                     </div>
-                    <div className="pt-3 text-left text-gray-600 transition-all sm:opacity-0 sm:translate-y-2 sm:group-hover:h-fit sm:h-0 overflow-hidden  sm:group-hover:opacity-100">
-                      <p className="text-xs font-['Castio'] uppercase tracking-[0.2em] ">{card.company}</p>
-                      <span className="flex items-center justify-between">
-                        <p className="mt-1 text-lg  font-semibold">{card.title}</p>
-                        {card.date}
+                    <div className="pt-3 text-left text-gray-600 transition-all pb-4 sm:opacity-0 sm:translate-y-2 sm:group-hover:h-fit sm:h-0 overflow-hidden sm:hidden group-hover:block sm:group-hover:opacity-100">
+                      <h3 className="sm:text-2xl font-bold ">{card.company}</h3>
+                      <p className="mt-1 text-lg  text-slate-400 font-semibold">{card.title}.  {card.date}</p>
+                      <span className="flex relative  group mt-1   items-center w-full bg-gray-200 py-4 px-6  rounded-full   justify-between">
+                        <p className="relative z-1 font-bold  ">View Case Study</p>
+                        <FaArrowRight size={24}/>
+                        <div className=" h-10 w-1/2 hidden  absolute group-hover:translate-x-0 duration-300  -translate-x-50 rounded-full left-2 bg-[#f67500] "></div>
                       </span>
                     </div>
                   </article>
                 </a>
               </div>
             ))}
+            </div>
           </div>
         </div>
       </div>

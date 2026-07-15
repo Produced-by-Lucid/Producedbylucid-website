@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import type { RefObject } from 'react';
 import type { HomePageContent } from '@/lib/site-types';
 import Image from 'next/image';
@@ -24,84 +23,65 @@ const serviceIllustrations = [
 ];
 
 export default function OurServicesGrid({ sectionRef, eyebrow, services }: OurServicesGridProps) {
-  const [activeService, setActiveService] = useState<string | null>(null);
-
-  const handleServiceTap = (title: string) => {
-    setActiveService(activeService === title ? null : title);
-  };
 
   return (
     <section
       id="services"
       ref={sectionRef}
-      className="relative z-20 scroll-mt-24  px-4 py-8 sm:px-6 sm:py-10"
+      className="relative z-20 bg-white min-h-screen px-4 pb-50 outilne sm:px-6 sm:pb-80"
     >
+       <Image
+              src="/divider-shape.svg"
+              alt="Divider Shape"
+              width={1920}
+              height={889}
+              className="absolute inset-0 w-full -mt-20 brightness-200  h-full object-cover"
+            />
+       <Image
+        src="/divider-convex.svg"
+        alt="Divider Shape"
+        width={1920}
+        height={889}
+        className="absolute inset-0 w-full -bottom-[20vh]  brightness-200   h-full object-cover"
+      />
 
-      <DynamicBackground/>
       
-      <div className="mx-auto ">
-        <div className="flex items-center justify-between border-b border-[#DB612D]/65 pb-4">
-          <p className="text-xl  uppercase tracking-[2rem] text-[#DB612D] sm:text-xl">
+      <div className="mx-auto relative z-20 ">
+        <div className="flex items-center justify-between flex-col  py-18">
+          <h1 className="sm:text-[5rem] text-center font-bold uppercase text-[#dfdfdf] text-xl">
             {eyebrow}
-          </p>
+          </h1>
           
-          <span className="hidden items-center gap-2 text-[#DB612D] sm:flex">
-            <p className="text-5xl font-bold leading-none tracking-[0.22em] animate-spin  text-[#DB612D] sm:text-8xl">
-              *
-            </p>
-            <p className="text-5xl font-bold leading-none tracking-[0.22em] animate-spin  text-[#DB612D] sm:text-8xl">
-              *
-            </p>
-            
-          </span>
-        </div>
+          
+        </div> 
 
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-8 grid  max-w-screen-xl  mb-16 bg-white rounded-3xl border border-gray-200   overflow-hidden  mx-auto">
           {services.map((service, index) => {
-            const isActive = activeService === service.title;
             const serviceImage =
               serviceIllustrations[index % serviceIllustrations.length] ?? serviceIllustrations[0];
 
             return (
               <article
                 key={service.title}
-                onClick={() => handleServiceTap(service.title)}
-                className={`group relative sm:min-h-[650px] min-h-[40vh] overflow-hidden border border-[#DB612D]/65 p-6 sm:min-h-[420px] sm:p-8 cursor-pointer transition-all ${
-                  isActive ? 'is-active' : ''
-                }`}
+                className="flex items-stretch gap-6 rounded-lg p-6  overflow-hidden "
               >
-                <div className={`pointer-events-none absolute inset-0 bg-[#FFE1CD] z-60 duration-300 group-hover:translate-y-0 ${
-                  isActive ? 'translate-y-0' : 'translate-y-[100%]'
-                }`} />
-                <div className="relative flex z-90 h-full flex-col">
-                  <h3 className={`max-w-[90%] text-xl font-semibold uppercase leading-tight text-[#DB612D] transition-opacity duration-300 group-hover:opacity-0 sm:text-2xl ${
-                    isActive ? 'opacity-0' : ''
-                  }`}>
-                    {service.title}
-                  </h3>
-
-                  <div className={`pointer-events-none absolute inset-x-6 top-6 translate-y-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 sm:inset-x-8 sm:top-6 ${
-                    isActive ? 'translate-y-0 opacity-100' : ''
-                  }`}>
-                    <h4 className="max-w-[90%] text-2xl font-semibold uppercase leading-tight !text-[#DB612D] sm:text-4xl">
-                      {service.title}
-                    </h4>
-                    <p className="mt-8 max-w-[30ch] text-base leading-relaxed text-[#1f3e2d] sm:text-lg">
-                      {service.content}
-                    </p>
-                  </div>
-                </div>
-
-                <div className={`pointer-events-none absolute bottom-4 right-4 z-10 h-56 w-56 overflow-hidden transition-all duration-300 group-hover:translate-y-4 group-hover:opacity-0 sm:bottom-6 sm:right-6 sm:h-[14rem] sm:w-[14rem] ${
-                  isActive ? 'translate-y-4 opacity-0' : ''
-                }`}>
+                <div className="relative w-60 h-60 flex-shrink-0 rounded-lg bg-[#DB612D] p-4 flex items-center justify-center">
                   <Image
                     src={serviceImage}
                     alt={`${service.title} icon`}
                     fill
-                    sizes="(min-width: 640px) 224px, 144px"
-                    className="object-contain p-1"
+                    sizes="160px"
+                    className="object-contain p-4"
                   />
+                </div>
+                
+                <div className="flex flex-col justify-center py-6 pr-6 flex-1">
+                  <h3 className="text-4xl font-semibold  leading-tight text-[#07773a] mb-3">
+                    {service.title}
+                  </h3>
+                  <p className="sm:text-2xl text-lg  font-medium  leading-relaxed text-[#1f3e2d]">
+                    {service.content}
+                  </p>
                 </div>
               </article>
             );

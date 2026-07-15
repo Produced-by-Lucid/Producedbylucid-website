@@ -23,7 +23,7 @@ export default function HeroCurvedHeadline({ curvedHeadline, svgRef }: HeroCurve
         <text
           className="font-bold uppercase fill-[#1B5E3F]"
           fontSize="56"
-          fontFamily="var(--font-display), sans-serif"
+          fontFamily="var(--font-display), serif"
           letterSpacing="1"
           fontWeight="700"
         >

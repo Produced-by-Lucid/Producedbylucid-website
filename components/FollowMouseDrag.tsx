@@ -7,12 +7,19 @@ import { PiArrowUpRightLight } from "react-icons/pi";
 
 interface FollowMouseDragProps {
   targetRef: RefObject<HTMLElement | null>;
+  hoverTargetSelector?: string;
   label?: string;
   showIcon?: boolean;
   enabled?: boolean;
 }
 
-export default function FollowMouseDrag({ targetRef, label = 'DRAG', showIcon = true, enabled = true }: FollowMouseDragProps) {
+export default function FollowMouseDrag({
+  targetRef,
+  hoverTargetSelector,
+  label = 'DRAG',
+  showIcon = true,
+  enabled = true,
+}: FollowMouseDragProps) {
   const cursorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,8 +39,26 @@ export default function FollowMouseDrag({ targetRef, label = 'DRAG', showIcon = 
       moveY(clientY - height / 2);
     };
 
+    const hoverTargets = hoverTargetSelector
+      ? Array.from(target.querySelectorAll<HTMLElement>(hoverTargetSelector))
+      : [target];
+
+    const isFullyInViewport = (element: HTMLElement) => {
+      const rect = element.getBoundingClientRect();
+      return (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= window.innerHeight &&
+        rect.right <= window.innerWidth
+      );
+    };
+
     const handleEnter = (event: MouseEvent) => {
-      target.classList.add('cursor-none');
+      const currentTarget = event.currentTarget as HTMLElement;
+      if (!isFullyInViewport(currentTarget)) {
+        return;
+      }
+      currentTarget.classList.add('cursor-none');
       const { width, height } = cursor.getBoundingClientRect();
       gsap.set(cursor, { x: event.clientX - width / 2, y: event.clientY - height / 2 });
       gsap.to(cursor, { autoAlpha: 1, scale: 1, duration: 0.2, ease: 'power2.out', overwrite: 'auto' });
@@ -43,22 +68,27 @@ export default function FollowMouseDrag({ targetRef, label = 'DRAG', showIcon = 
       moveToPointerCenter(event.clientX, event.clientY);
     };
 
-    const handleLeave = () => {
-      target.classList.remove('cursor-none');
+    const handleLeave = (event: MouseEvent) => {
+      const currentTarget = event.currentTarget as HTMLElement;
+      currentTarget.classList.remove('cursor-none');
       gsap.to(cursor, { autoAlpha: 0, scale: 0.92, duration: 0.2, ease: 'power2.out', overwrite: 'auto' });
     };
 
-    target.addEventListener('mouseenter', handleEnter);
-    target.addEventListener('mousemove', handleMove);
-    target.addEventListener('mouseleave', handleLeave);
+    hoverTargets.forEach((element) => {
+      element.addEventListener('mouseenter', handleEnter);
+      element.addEventListener('mousemove', handleMove);
+      element.addEventListener('mouseleave', handleLeave);
+    });
 
     return () => {
-      target.classList.remove('cursor-none');
-      target.removeEventListener('mouseenter', handleEnter);
-      target.removeEventListener('mousemove', handleMove);
-      target.removeEventListener('mouseleave', handleLeave);
+      hoverTargets.forEach((element) => {
+        element.classList.remove('cursor-none');
+        element.removeEventListener('mouseenter', handleEnter);
+        element.removeEventListener('mousemove', handleMove);
+        element.removeEventListener('mouseleave', handleLeave);
+      });
     };
-  }, [targetRef]);
+  }, [targetRef, hoverTargetSelector, enabled]);
 
   return (
     <div

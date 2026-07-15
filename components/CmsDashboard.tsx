@@ -59,6 +59,7 @@ const HOME_PAGE_SECTIONS: SectionDefinition[] = [
   { key: 'hero', label: 'Hero' },
   { key: 'featureShowcase', label: 'Intro' },
   { key: 'servicesSection', label: 'Services' },
+  { key: 'teamSection', label: 'Team' },
   { key: 'testimonialsSection', label: 'Testimonials' },
   { key: 'footerSection', label: 'Footer' },
 ];
@@ -614,11 +615,13 @@ function FormEditor({
   onChange,
   password,
   topLevelSections,
+  activeSection,
 }: {
   content: string;
   onChange: (content: string) => void;
   password: string;
   topLevelSections?: SectionDefinition[];
+  activeSection?: string | null;
 }) {
   const { data, error } = useMemo(() => {
     if (!content.trim()) {
@@ -649,8 +652,14 @@ function FormEditor({
       .filter((key) => !preferredKeys.has(key))
       .map((key) => ({ key, label: formatKeyLabel(key) }));
 
-    return [...preferredSections, ...remainingSections];
-  }, [data, topLevelSections]);
+    const allSections = [...preferredSections, ...remainingSections];
+
+    if (activeSection) {
+      return allSections.filter((section) => section.key === activeSection);
+    }
+
+    return allSections;
+  }, [activeSection, data, topLevelSections]);
 
   if (error || !data) {
     return (
@@ -670,16 +679,37 @@ function FormEditor({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
       {sections.map((section) => (
-        <div key={section.key} data-cms-section={section.key} style={{ scrollMarginTop: '1rem' }}>
+        <section
+          key={section.key}
+          data-cms-section={section.key}
+          style={{
+            scrollMarginTop: '1rem',
+            border: '1px solid #e7edf2',
+            borderRadius: 14,
+            background: '#ffffff',
+            padding: '0.9rem 0.95rem',
+            boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04)',
+          }}
+        >
+          <div style={{
+            fontSize: '0.76rem',
+            fontWeight: 800,
+            color: '#6b7b8c',
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            marginBottom: '0.6rem',
+          }}>
+            {section.label}
+          </div>
           <Field
             fieldKey={section.key}
             value={data[section.key]}
             onChange={(nextValue) => onChange(JSON.stringify({ ...data, [section.key]: nextValue }, null, 2))}
             password={password}
           />
-        </div>
+        </section>
       ))}
     </div>
   );
@@ -761,7 +791,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
   const [blogOpen, setBlogOpen] = useState(true);        // Blog accordion expanded
   const [projectsOpen, setProjectsOpen] = useState(false); // Projects accordion expanded
   const [libraryOpen, setLibraryOpen] = useState(false);  // Content library accordion expanded
-  const [pendingSectionScroll, setPendingSectionScroll] = useState<string | null>(null); // Section to scroll to after content loads
+  const [activeHomeSection, setActiveHomeSection] = useState<string | null>(null); // Currently selected home section to edit
 
   // --- Preview & floating panel state ---
   const [previewKey, setPreviewKey] = useState(0);              // Incremented to force iframe reload
@@ -807,21 +837,6 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
 
   // --- Effect: scroll to a specific section in the form editor ---
   // Triggered when clicking a home page section in the sidebar.
-  useEffect(() => {
-    if (!pendingSectionScroll || selectedFile !== HOME_PAGE_FILE || activeEditorTab !== 'form' || loadingContent) {
-      return;
-    }
-
-    const scrollHost = formScrollRef.current;
-    const sectionElement = scrollHost?.querySelector<HTMLElement>(`[data-cms-section="${pendingSectionScroll}"]`);
-
-    if (!scrollHost || !sectionElement) {
-      return;
-    }
-
-    sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setPendingSectionScroll(null);
-  }, [activeEditorTab, content, loadingContent, pendingSectionScroll, selectedFile]);
 
   // --- Effect: load all files in category when gridView opens ---
   useEffect(() => {
@@ -1119,6 +1134,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     setSaving(true);
     setError(null);
     setStatus(null);
+    addNotification('Saving… changes may take up to 2 mins to reflect on the live site.', 'info');
 
     try {
       const response = await fetch(`/api/cms/files/${encodeURI(selectedFile)}`, {
@@ -1182,6 +1198,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     const filesToSave = gridView === 'projects' ? projectFiles : gridView === 'testimonials' ? testimonialFiles : [];
     setSaving(true);
     setError(null);
+    addNotification('Saving… changes may take up to 2 mins to reflect on the live site.', 'info');
 
     try {
       await Promise.all(
@@ -1212,7 +1229,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
   /** Selects a file in the sidebar and clears any pending section scroll. */
   function selectFile(filePath: string) {
     setSelectedFile(filePath);
-    setPendingSectionScroll(null);
+    setActiveHomeSection(filePath === HOME_PAGE_FILE ? null : activeHomeSection);
     setGridView(null);
     setAnalyticsOpen(false);
     setPanelOpen(true);
@@ -1222,7 +1239,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     setActiveSidebarTab('settings');
     setGridView(null);
     setSelectedFile(null);
-    setPendingSectionScroll(null);
+    setActiveHomeSection(null);
     setAnalyticsOpen(true);
     setPanelOpen(true);
     void loadAnalytics(analyticsDays);
@@ -1248,7 +1265,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     setActiveSidebarTab('pages');
     setHomeOpen(true);
     setActiveEditorTab('form');
-    setPendingSectionScroll(sectionKey);
+    setActiveHomeSection(sectionKey);
     setPanelOpen(true);
 
     if (selectedFile !== HOME_PAGE_FILE) {
@@ -1459,7 +1476,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                             background:
                               (section.key === 'projectsSection' && gridView === 'projects') ||
                               (section.key === 'testimonialsSection' && gridView === 'testimonials') ||
-                              (selectedFile === HOME_PAGE_FILE && pendingSectionScroll === section.key)
+                              (selectedFile === HOME_PAGE_FILE && activeHomeSection === section.key)
                                 ? '#f0f2f5'
                                 : 'transparent',
                             color: '#3a4a5a',
@@ -2330,7 +2347,13 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                 />
               ) : (
                 <div ref={formScrollRef}>
-                  <FormEditor content={content} onChange={setContent} password={password} topLevelSections={topLevelSections} />
+                  <FormEditor
+                    content={content}
+                    onChange={setContent}
+                    password={password}
+                    topLevelSections={topLevelSections}
+                    activeSection={selectedFile === HOME_PAGE_FILE ? activeHomeSection : null}
+                  />
                 </div>
               )}
 

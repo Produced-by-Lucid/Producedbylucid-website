@@ -1,30 +1,16 @@
 import * as React from "react";
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
 import "@fontsource/zilla-slab/300.css";
 import "@fontsource/zilla-slab/400.css";
 import "@fontsource/zilla-slab/500.css";
 import "@fontsource/zilla-slab/600.css";
 import "@fontsource/zilla-slab/700.css";
+import "@fontsource-variable/instrument-sans/index.css";
 import { getSiteSettings } from "@/lib/site-content";
+import SmoothScroll from "@/components/SmoothScroll";
 import "./globals.css";
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
-const castio = localFont({
-  src: [
-    {
-      path: "../public/fonts/castio-regular.otf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../public/fonts/castio-italic.otf",
-      weight: "400",
-      style: "italic",
-    },
-  ],
-  variable: "--font-display",
-});
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
@@ -117,7 +103,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const bodyClassName = `${castio.variable} antialiased`;
+  const bodyClassName = "antialiased";
 
   return (
     <html lang="en">
@@ -132,7 +118,7 @@ export default function RootLayout({
         </head>
       ) : null}
       <body suppressHydrationWarning className={bodyClassName}>
-        {children}
+        <SmoothScroll>{children}</SmoothScroll>
       </body>
     </html>
   );

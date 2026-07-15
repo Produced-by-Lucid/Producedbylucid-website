@@ -39,11 +39,6 @@ export default function LandingPage({
   const ctaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Use native CSS smooth scroll instead of Lenis for better browser compatibility
-    if (typeof window !== 'undefined') {
-      document.documentElement.style.scrollBehavior = 'smooth';
-    }
-
     // CTA section animation
     gsap.from('.cta-content', {
       scrollTrigger: {
@@ -124,9 +119,6 @@ export default function LandingPage({
 
     return () => {
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
-      if (typeof window !== 'undefined') {
-        document.documentElement.style.scrollBehavior = 'auto';
-      }
     };
   }, []);
 
@@ -170,7 +162,7 @@ export default function LandingPage({
               />
             </div>
               {/* marquee text */}
-            <div className="relative  z-10 mb-8 w-full text-[Castio] overflow-hidden border-b border-cream">
+            <div className="relative mix-blend-color-dodge  z-10 mb-8 w-full text-[Castio] overflow-hidden border-b border-cream">
               <div
                 className="animate-scroll-x flex w-max items-center whitespace-nowrap text-outline mix-blend-color-dodge  will-change-transform text-5xl sm:text-6xl md:text-[14rem]"
                 style={{ animationDuration: '80s' }}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import LogoSpriteAnimation from './LogoSpriteAnimation';
 
 export default function LoadingScreen({
   images,
@@ -62,20 +63,22 @@ export default function LoadingScreen({
       {/* Percentage */}
       <span
         style={{
-          fontFamily: 'var(--font-display), sans-serif',
-          fontSize: '0.78rem',
-          letterSpacing: '0.18em',
-          color: 'rgba(255,225,205,0.55)',
+          fontFamily: 'var(--font-display), serif',
+          fontSize: '1.78rem',
+          fontWeight: 'bold',
           fontVariantNumeric: 'tabular-nums',
           minWidth: '3ch',
           textAlign: 'center',
         }}
       >
-        {progress}%
+         <div className="">
+        <LogoSpriteAnimation className="mb-6 flex items-center justify-center" />
+      </div >
+     
+        <div className=" text-stone-700"> Hold on...{progress}%</div>
       </span>
 
-      {/* Track */}
-      <div
+     {/* <div 
         style={{
           width: 'min(340px, 72vw)',
           height: 1,
@@ -84,8 +87,7 @@ export default function LoadingScreen({
           overflow: 'hidden',
         }}
       >
-        {/* Fill */}
-        <div
+         <div 
           style={{
             height: '100%',
             width: `${progress}%`,
@@ -94,7 +96,9 @@ export default function LoadingScreen({
             transition: 'width 80ms linear',
           }}
         />
-      </div>
+      </div>  */}
+     
+
     </div>
   );
 }

@@ -1,8 +1,10 @@
-'use client';
+"use client";
 
 import React, { useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import type { HomePageContent } from '@/lib/site-types';
+import { motion } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 
 interface Props {
   section: HomePageContent['featureShowcase'];
@@ -10,83 +12,99 @@ interface Props {
   setCurrentSlide: React.Dispatch<React.SetStateAction<number>>;
 }
 
-const FeaturesSection = React.forwardRef<HTMLDivElement, Props>(
-  ({ section, currentSlide, setCurrentSlide }, ref) => {
-    const { slides, headingPrefix, highlightWord, description } = section;
+const TextReveal: React.FC<{ text: string }> = ({ text }) => {
+  const words = text.split(' ');
 
-    // Auto-advance slides every 4 seconds
-    const nextSlide = useCallback(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, [slides.length, setCurrentSlide]);
+  const container: Variants = {
+    hidden: { opacity: 0 },
+    visible: (i = 1) => ({
+      opacity: 1,
+      transition: { staggerChildren: 0.12, delayChildren: 0.04 * i },
+    }),
+  };
 
-    useEffect(() => {
-      const timer = setInterval(nextSlide, 4000);
-      return () => clearInterval(timer);
-    }, [nextSlide]);
+  const child: Variants = {
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { type: 'spring', damping: 12, stiffness: 100 },
+    },
+    hidden: {
+      opacity: 0,
+      y: 20,
+      transition: { type: 'spring', damping: 12, stiffness: 100 },
+    },
+  };
 
-    return (
-      <section ref={ref} className="relative h-screen  flex items-center justify-center  px-4 sm:px-6">
-        <div className="max-w-6xl flex flex-col md:flex-row gap-8 sm:gap-12 md:gap-20 lg:gap-30 relative z-10">
-          <div className='relative w-full md:w-125 h-80 sm:h-96 md:h-90'>
-            {/* Slider Images */}
-            <div className="relative w-full h-full overflow-hidden  ">
-              {slides.map((slide, index) => (
-                <div
-                  key={index}
-                  className={`absolute inset-0 transition-opacity duration-500 ${index === currentSlide ? 'opacity-100' : 'opacity-0'
-                    }`}
-                >
-                  <Image
-                    src={slide.image}
-                    alt={slide.title || 'Slide'}
-                    width={500}
-                    height={500}
-                    className="object-cover h-full"
-                    unoptimized
-                  />
-                </div>
-              ))}
+  return (
+    <motion.div
+      style={{ overflow: 'hidden', display: 'flex', fontSize: '2rem', flexWrap: 'wrap', justifyContent: 'center' }}
+      variants={container}
+      initial="hidden"
+      animate="visible"
+    >
+      {words.map((word, index) => (
+        <motion.span variants={child} style={{ marginRight: '8px' }} key={index}>
+          {word}
+        </motion.span>
+      ))}
+    </motion.div>
+  );
+};
 
-            </div>
-            {/* <Image
-              src={'/bow.png'}
-              alt="Decoration"
-              width={150}
-              height={150}
-              className='absolute -top-6 -right-8 sm:-top-10 sm:-right-12 md:-right-20 w-20 h-20 sm:w-32 sm:h-32 md:w-36 md:h-36'
-            /> */}
+const FeaturesSection = React.forwardRef<HTMLDivElement, Props>(({ section, currentSlide, setCurrentSlide }, ref) => {
+  const { slides, headingPrefix, highlightWord, description } = section;
 
-            <div className="flex flex-row-reverse w-full justify-between items-center mt-4">
-              {/* Slide Indicators */}
-              <div className="relative bg-white/30 rounded-full overflow-hidden h-0.5 w-20 transform flex gap-2">
-                {slides.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentSlide(index)}
-                    className={`w-2 h-1 rounded-full transition-all ${index === currentSlide ? 'bg-cream w-8' : 'bg-cream/30'
-                      }`}
-                    aria-label={`Go to slide ${index + 1}`}
-                  />
-                ))}
-              </div>
-              {/* Title */}
-              <p className="text-center text-black">{slides[currentSlide].title}</p>
-            </div>
-          </div>
-          <div className="space-y-6 sm:space-y-8 md:space-y-10 text-[#154122] max-w-md">
-            <h2 className="mb-8 text-3xl font-bold uppercase sm:mb-12 sm:text-4xl md:mb-16 md:text-5xl lg:text-6xl">
-              {headingPrefix.split(' ').slice(0, -2).join(' ')} <span className="w-2"></span>
-              {headingPrefix.split(' ').slice(-2).join(' ')} <br /> <span className="text-[#DB612D]">{highlightWord}</span>
-            </h2>
-            <p className='text-sm sm:text-base font-medium md:pr-25'>{description}</p>
-            <div className="flex flex-col">
-            </div>
-          </div>
+  const nextSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  }, [slides.length, setCurrentSlide]);
+
+  useEffect(() => {
+    const timer = setInterval(nextSlide, 4000);
+    return () => clearInterval(timer);
+  }, [nextSlide]);
+
+  return (
+    <section ref={ref} className="relative min-h-screen  bg-[#FDF8EC] py-[20dvh] flex items-center justify-center  px-4 sm:px-6">
+      <Image
+        src="/divider-shape.svg"
+        alt="Divider Shape"
+        width={1920}
+        height={889}
+        className="absolute inset-0 w-full -mt-20  h-full object-cover"
+      />
+      <div className=" flex flex-col mx-auto items-center  gap-8 sm:gap-12 md:gap-20   lg:gap-30 relative z-10">
+
+        <div className="space-y-6 sm:space-y-8 md:space-y-10 text-[#154122] max-w-4xl">
+          <h1 className="ml text-center text-7xl font-bold ">
+            {headingPrefix.split(' ').slice(0, -2).join(' ')} <span className="w-2"></span>
+            {headingPrefix.split(' ').slice(-2).join(' ')} <br /> <span className="text-[#DB612D]">{highlightWord}</span>
+          </h1>
         </div>
-      </section>
-    );
-  }
-);
+
+        <div className='relative flex items-center flex-col gap-12   '>
+          {/* Slider Images */}
+          <div className="relative w-full sm:h-[80vh]  overflow-hidden rounded-3xl flex items-center  ">
+            <video
+              src={'/0001-0500.mp4'}
+              width={1200}
+              height={900}
+              className="object-cover h-full"
+              autoPlay
+              loop
+              muted
+            />
+          </div>
+
+          <div className="mt-8 text-center max-w-3xl">
+            <TextReveal text={description} />
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+});
 
 FeaturesSection.displayName = 'FeaturesSection';
 
