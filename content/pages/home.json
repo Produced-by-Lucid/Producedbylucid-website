@@ -36,15 +36,18 @@
     "items": [
       {
         "title": "Experience Strategy",
-        "content": "We start with your goals and define the idea, structure, and flow of the event. The result is a clear plan that ensures every element works together and delivers the intended outcome."
+        "content": "We start with your goals and define the idea, structure, and flow of the event. The result is a clear plan that ensures every element works together and delivers the intended outcome.",
+        "serviceImage": "/services-img/srv_1_1_.png"
       },
       {
         "title": "Creative Direction",
-        "content": "We translate ideas into a distinct look and feel. From visual identity and styling to spatial and sensory design, we ensure every element is cohesive, on-brand, and thoughtfully considered."
+        "content": "We translate ideas into a distinct look and feel. From visual identity and styling to spatial and sensory design, we ensure every element is cohesive, on-brand, and thoughtfully considered.",
+        "serviceImage": "/services-img/srv_2.png"
       },
       {
         "title": "Event Production ",
-        "content": "Our on-site expertise ensures flawless execution, managing every detail from setup to teardown. We handle stage, lighting, sound, screens, branding, decor, catering, entertainment, and everything in between."
+        "content": "Our on-site expertise ensures flawless execution, managing every detail from setup to teardown. We handle stage, lighting, sound, screens, branding, decor, catering, entertainment, and everything in between.",
+        "serviceImage": "/services-img/srv_3.png"
       }
     ]
   },

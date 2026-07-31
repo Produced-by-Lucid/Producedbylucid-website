@@ -126,20 +126,15 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
   };
 
   return (
-    <section id="projects" ref={sectionRef} className="relative flex justify-center    min-h-[120vh] flex-1 z-3   items-center overflow-hidden sm:px-0    ">
-     
-      {/* <Image
-        src="/pattern-official.png"
-        alt="Divider Shape"
-        width={1920}
-        height={889}
-        className="absolute inset-0 w-screen  h-full object-cover"
-      /> */}
+    <section id="projects" ref={sectionRef} className="relative z-3 flex min-h-[90vh] flex-1 items-center justify-center overflow-hidden sm:min-h-[120vh] sm:px-0">
+    
 
       
 
-      <div className="relative z-10   w-full ">
-        <h2 className="section-title-text mb-8 text-center  font-semibold uppercase tracking-[0.45em]  sm:text-sm sm:tracking-[0.8em]">{eyebrow}</h2>
+      <div className="relative z-10 w-full  ">
+        <h2 className="section-title-text mb-8 text-center text-sm font-semibold uppercase tracking-[0.35em] text-white sm:text-base sm:tracking-[0.8em]">
+          {eyebrow || 'Featured Projects'}
+        </h2>
 
 
         <div
@@ -165,7 +160,7 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
 
             <div
               ref={marqueeTrackRef}
-              className="projects-linear-track mb-20 pt-32 flex w-max items-center gap-[6vw] relative   justify-center sm:gap-[10vw]"
+              className="projects-linear-track relative mb-12 flex w-max items-center justify-center gap-[10vw] pt-12 sm:mb-20 sm:gap-[10vw] sm:pt-32"
               
               
             >
@@ -178,7 +173,7 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
 
                 <a href={card.href || '#'} className="block" draggable={false}>
                   <article
-                    className="projects-linear-card group w-[82vw] bg-[#fdf8ec] p-1 shadow-5xl transition-[width,padding,box-shadow] duration-400 ease-out sm:w-55 sm:hover:w-[26vw] sm:hover:p-3 sm:hover:shadow-[0_14px_50px_rgba(0,0,0,0.35)]"
+                    className="projects-linear-card group w-[65dvw] bg-[#fdf8ec] sm:p-1 px-2 pt-2 shadow-5xl transition-[width,padding,box-shadow] duration-400 ease-out sm:w-55 sm:hover:w-[26vw] sm:hover:p-3 sm:hover:shadow-[0_14px_50px_rgba(0,0,0,0.35)]"
                   >
 
                     <div className="relative h-[28vh] w-full overflow-hidden sm:h-[22vh] group-hover:sm:h-[34vh]">
@@ -195,11 +190,11 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
                       <Image src={card.image} alt={card.title} fill className="projects-linear-image pointer-events-none object-cover duration-200  group-hover:scale-120" sizes="(min-width: 1024px) 32rem, 78vw" draggable={false} />
                       <Image src={'/ribbon-cut.svg'} alt={'ribbon'} width={200} height={400} className=" group-hover:translate-y-0 duration-500  ease-cubic  absolute top-0 right-0 w-10 mr-4 -translate-y-full" draggable={false} />
                     </div>
-                    <div className="pt-3 text-left text-gray-600 transition-all pb-4 sm:opacity-0 sm:translate-y-2 sm:group-hover:h-fit sm:h-0 overflow-hidden sm:hidden group-hover:block sm:group-hover:opacity-100">
+                    <div className="block pb-4 pt-3 text-left text-gray-600 transition-all  sm:hidden sm:h-0 sm:overflow-hidden sm:translate-y-2 sm:opacity-0 sm:group-hover:block sm:group-hover:h-fit sm:group-hover:opacity-100">
                       <h3 className="sm:text-2xl font-bold ">{card.company}</h3>
-                      <p className="mt-1 text-lg  text-slate-400 font-semibold">{card.title}.  {card.date}</p>
-                      <span className="flex relative  group mt-1   items-center w-full bg-gray-200 py-4 px-6  rounded-full   justify-between">
-                        <p className="relative z-1 font-bold  ">View Case Study</p>
+                      <p className="mt-1 sm:text-lg  text-slate-400 font-semibold">{card.title}.  {card.date}</p>
+                      <span className="flex relative  group mt-1   items-center w-full bg-gray-200 sm:py-4 sm:px-6 py-2 px-4  rounded-full   justify-between">
+                        <p className="relative z-1 max-sm:text-xs  font-bold  ">View Case Study</p>
                         <FaArrowRight size={24}/>
                         <div className=" h-10 w-1/2 hidden  absolute group-hover:translate-x-0 duration-300  -translate-x-50 rounded-full left-2 bg-[#f67500] "></div>
                       </span>

@@ -11,7 +11,7 @@ export default function Footer({ settings }: FooterProps) {
   return (
     <footer
       id="contact"
-      className="relative z-10 flex min-h-[60vh] scroll-mt-24 flex-col justify-end gap-14  py-8 sm:gap-20 sm:py-12"
+      className="relative z-10 flex sm:min-h-[70vh] min-h-[80dvh]  scroll-mt-24 flex-col justify-end gap-14  py-8 sm:gap-20 sm:py-12"
     >
       <div className="w-full max-w-7xl mx-auto  text-center space-y-8 text-cream/60">
         <div className="absolute bottom-0 z-0 mb-8 h-32 w-full sm:h-48 md:h-64">

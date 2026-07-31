@@ -1,0 +1,163 @@
+.cms-dashboard h1,
+.cms-dashboard h2,
+.cms-dashboard h3,
+.cms-dashboard h4,
+.cms-dashboard h5,
+.cms-dashboard h6,
+.cms-dashboard button,
+.cms-dashboard label,
+.cms-dashboard a { font-family: inherit; }
+
+@keyframes cms-toast-in {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.cms-mobile-only { display: none; }
+
+@media (max-width: 767px) {
+  .cms-dashboard {
+    --cms-top-height: calc(104px + env(safe-area-inset-top));
+    --cms-bottom-height: calc(82px + env(safe-area-inset-bottom));
+    background: #f4f6f8;
+  }
+
+  .cms-preview {
+    position: fixed;
+    top: var(--cms-top-height);
+    right: 0;
+    bottom: var(--cms-bottom-height);
+    left: 0;
+    width: 100% !important;
+    height: auto !important;
+    min-height: calc(100dvh - var(--cms-top-height) - var(--cms-bottom-height));
+    background: #fff;
+  }
+
+  .cms-sidebar-collapsed-button { display: none !important; }
+
+  .cms-sidebar {
+    pointer-events: none;
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    width: auto !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    font-size: 0.8rem;
+  }
+
+  .cms-topbar,
+  .cms-primary-tabs,
+  .cms-bottom-sections { pointer-events: auto; }
+
+  .cms-topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: calc(54px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 14px 0 !important;
+    border-bottom: 1px solid #e8ebee !important;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(18px);
+  }
+
+  .cms-topbar > span { font-size: 0.9rem !important; }
+  .cms-topbar-actions { gap: 4px !important; }
+
+  .cms-topbar-actions > * {
+    width: 34px;
+    height: 34px;
+    padding: 0 !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px !important;
+    background: #f2f4f6 !important;
+  }
+
+  .cms-desktop-only { display: none !important; }
+  .cms-mobile-only { display: flex; }
+
+  .cms-primary-tabs {
+    position: fixed;
+    top: calc(54px + env(safe-area-inset-top));
+    left: 0;
+    right: 0;
+    height: 50px;
+    padding: 7px 14px !important;
+    gap: 6px !important;
+    background: rgba(255, 255, 255, 0.96);
+    border-bottom: 1px solid #e8ebee;
+  }
+
+  .cms-primary-tabs button {
+    gap: 6px;
+    border-radius: 10px !important;
+  }
+
+  .cms-bottom-sections {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--cms-bottom-height);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 9px 12px calc(9px + env(safe-area-inset-bottom)) !important;
+    background: rgba(255, 255, 255, 0.97);
+    border-top: 1px solid #e1e5e9;
+    box-shadow: 0 -8px 24px rgba(18, 33, 48, 0.07);
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cms-bottom-sections::-webkit-scrollbar { display: none; }
+
+  .cms-bottom-sections > div,
+  .cms-bottom-sections > div > div {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    align-items: center;
+    gap: 6px !important;
+    margin: 0 !important;
+  }
+
+  .cms-bottom-sections button {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    max-width: none !important;
+    min-height: 48px;
+    padding: 8px 12px !important;
+    white-space: nowrap !important;
+    border-radius: 12px !important;
+    text-align: center !important;
+  }
+
+  .cms-bottom-sections button[title^='Delete'],
+  .cms-sidebar-footer,
+  .cms-editor-resize-handle { display: none !important; }
+
+  .cms-editor-panel {
+    top: var(--cms-top-height) !important;
+    left: 0 !important;
+    bottom: var(--cms-bottom-height) !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    height: auto !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+}

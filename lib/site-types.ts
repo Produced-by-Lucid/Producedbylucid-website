@@ -65,6 +65,7 @@ headlineSuffix: string;
     items: {
       title: string;
       content: string;
+      serviceImage?: string;
     }[];
   };
   testimonialsSection: {

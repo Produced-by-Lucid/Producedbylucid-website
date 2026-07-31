@@ -181,14 +181,14 @@ export default function HomePageClient({
         className=" inset-0 w-screen  fixed  h-full object-cover"
       />
 
-      <div className="fixed  bottom-0  flex w-screen   h-[40vh] items-center justify-center ">
+      <div className="fixed  bottom-0  flex w-screen  inset-0 translate-y-20 sm:translate-y-80    h-[40vh] items-center justify-center ">
         <div className="bg-">
           <Image
             src={'/stamp-logo.svg'}
             alt="Produced by Lucid Footer Logo"
             height={300}
             width={300}
-            className=" object-cover relative outline  "
+            className=" object-cover relative   index-0 top-[20vh] "
           />
         </div>
       </div>
@@ -207,15 +207,28 @@ export default function HomePageClient({
         eyebrow={home.servicesSection.eyebrow}
         services={home.servicesSection.items}
       />
-      <div className="w-screen relative flex flex-col bg-[#1d6133]  ">
-        <Image src={'/silver-bg.png'} alt={'silver'} width={1920} height={1200} className=" blur-2xl duration-500  ease-cubic min-w-[140vw] w-full -bottom-[5vh]  h-[150vh] absolute mx-auto " />
-        <div ref={stripesRef} className="flex w-screen absolute z-1 inset-0 group gap-1 min-h-screen h-[80%]">
+      <div className="w-screen relative flex flex-col bg-[#a13b1b]  ">
+        
+ <Image
+                        src="/divider-shape.svg"
+                        alt="Divider Shape"
+                        width={1200}
+                        height={889}
+                        className=" inset-0 w-full -mt-[80vh]  rotate-z-180  z-6 brightness-200  object-cover max-sm:-mt-8 max-sm:object-cover"
+                    />
+
+        {/* <Image src={'/silver-bg.png'} alt={'silver'} width={1920} height={1200} className=" blur-2xl duration-500  ease-cubic min-w-[140vw] w-full -bottom-[5vh]  h-[150vh] absolute mx-auto " /> */}
+        <div ref={stripesRef} className="flex w-screen absolute z-1 inset-0 group gap-1 min-h-screen h-[60%]">
           {stripeHeights.map((height, index) => (
-            <li key={index} className="list-none flex-1 min-h-screen g  parallax-stripe bg-[#19532B]" style={{ height }} />
+            <li key={index} className="list-none flex-1 min-h-screen   parallax-stripe bg-[#19532B]" style={{ height }} />
           ))}
         </div>
 
-        <ProjectsLinear cards={projects} eyebrow={''} />
+        <div className="relative min-h-[150vh] sm:min-h-[170vh] lg:min-h-[190vh]">
+          <div className="sticky top-0 z-10 h-svh sm:h-screen">
+            <ProjectsLinear cards={projects} eyebrow={home.projectsSection.eyebrow} />
+          </div>
+        </div>
         <TestimonialsSection
           heading={home.testimonialsSection.curvedHeading}
           testimonials={testimonials}

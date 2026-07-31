@@ -28,14 +28,14 @@ export default function ClientsMarquee({ className = '' }: ClientsMarqueeProps) 
       <div className="relative overflow-hidden rounded-full px-3 py-4 shadow-[0_12px_40px_rgba(27,94,63,0.08)] backdrop-blur-sm mask-[linear-gradient(to_right,transparent,black_12%,black_88%,transparent)] sm:px-5">
         <div className="animate-scroll-x  flex w-max items-center gap-12 py-2 sm:gap-20">
           {[...clientLogos, ...clientLogos].map((logo, index) => (
-            <div key={`${logo.src}-${index}`} className="flex h-9 shrink-0 items-center sm:h-12">
+            <div key={`${logo.src}-${index}`} className="flex h-14 shrink-0 items-center sm:h-12">
               <Image
                 src={logo.src}
                 alt={logo.alt}
                 width={140}
                 height={48}
                 sizes="(max-width: 640px) 110px, 140px"
-                className="h-10 w-auto  object-contain brightness-0 opacity-90 sm:h-18 sm:max-w-64"
+                className="h-14 w-auto object-contain brightness-0 opacity-90 sm:h-18 sm:max-w-64"
               />
             </div>
           ))}

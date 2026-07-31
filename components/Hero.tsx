@@ -85,7 +85,7 @@ export default function Hero({ content }: HeroProps) {
       {/* Center Logo and Text Content */}
       <div className="relative z-20 w-full mb-18 flex flex-col items-center justify-center mx-auto h-[40dvh] gap-10 text-center max-sm:mb-0 max-sm:h-auto max-sm:min-h-[62svh] max-sm:justify-end max-sm:gap-6 max-sm:pb-8">
 
-        <h2 className="relative flex sm:flex-row flex-col sm:items-center z-10 mt-4 whitespace-pre-line sm:text-6xl text-2xl font-extrabold text-white! max-sm:gap-1 max-sm:leading-tight max-sm:tracking-tight">
+        <h2 className="relative max-sm:mb-[2vh]  flex sm:flex-row leading-1 flex-col sm:items-center z-10 mt-4 whitespace-pre-line sm:text-6xl text-5xl font-extrabold text-white! max-sm:gap-1 max-sm:leading-tight max-sm:tracking-tight">
           {content.headlinePrefix}
           <span className='w-26 flex relative px-4 max-sm:h-11 max-sm:w-20 max-sm:items-center max-sm:justify-center max-sm:self-center max-sm:px-0'>
             <Image alt='spark' width={60} height={20} src='/new-spark.svg' className=' relative  z-1'/>
@@ -99,11 +99,11 @@ export default function Hero({ content }: HeroProps) {
 
 
         {/* Agency Description */}
-        <div ref={textRef} className="max-w-xl px-4 sm:px-6 max-sm:px-0">
+        <div ref={textRef} className="max-w-xl px-4 sm:px-6 max-sm:mb-20  max-sm:px-0">
           {/* <p className="mb-3 text-xl font-bold text-[#1B5E3F]! sm:text-2xl md:text-3xl">
             {content.eyebrow}
           </p> */}
-          <p className="max-w-7xl text-base leading-relaxed text-white sm:text-lg md:text-xl max-sm:text-[0.95rem] max-sm:leading-6">
+          <p className="max-w-7xl max-sm:mb-10  max-sm:mx-5 text-base leading-relaxed text-white sm:text-lg md:text-xl max-sm:text-[0.95rem] max-sm:leading-6">
             {content.description}
           </p>
           <Link href={content.primaryCtaUrl} className="mt-6 flex items-center hover:-rotate-z-2 justify-between min-w-44 mx-auto relative whitespace-nowrap group rounded-full max-sm:mt-5

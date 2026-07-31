@@ -1,6 +1,7 @@
 'use client';
 
 import '@fontsource-variable/instrument-sans/index.css';
+import './CmsDashboard.css';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import { LuRefreshCw, LuPanelLeftClose, LuPanelLeftOpen, LuArrowLeft, LuGripVertical, LuX, LuSave, LuChevronDown, LuChevronRight, LuLogOut, LuRotateCw, LuPencil, LuPlus, LuTrash2, LuFileText, LuSettings, LuBell } from 'react-icons/lu';
 import BlogEditor from './BlogEditor';
@@ -1290,17 +1291,6 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
 
   return (
     <>
-      <style>{`
-        .cms-dashboard h1, .cms-dashboard h2, .cms-dashboard h3,
-        .cms-dashboard h4, .cms-dashboard h5, .cms-dashboard h6,
-        .cms-dashboard button, .cms-dashboard label, .cms-dashboard a {
-          font-family: inherit;
-        }
-        @keyframes cms-toast-in {
-          from { transform: translateX(24px); opacity: 0; }
-          to   { transform: translateX(0);   opacity: 1; }
-        }
-      `}</style>
 
       <main
         className="cms-dashboard"
@@ -1315,6 +1305,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
       >
         {/* Full-screen preview iframe */}
         <iframe
+          className="cms-preview"
           key={previewKey}
           src={`${previewUrl}${previewUrl.includes('?') ? '&' : '?'}t=${previewKey}`}
           title="Site preview"
@@ -1336,6 +1327,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
         {/* ── Sidebar: collapses into a small edit icon, expands to full nav ── */}
         {sidebarCollapsed ? (
           <button
+            className="cms-sidebar-collapsed-button"
             type="button"
             onClick={() => setSidebarCollapsed(false)}
             title="Expand sidebar"
@@ -1363,6 +1355,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
           </button>
         ) : null}
         <nav
+          className="cms-sidebar"
           style={{
             position: 'fixed',
             top: 12,
@@ -1382,17 +1375,19 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
           }}
         >
           {/* Brand + actions */}
-          <div style={{ padding: '0.6rem 0.65rem', borderBottom: '1px solid #edf0f3', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="cms-topbar" style={{ padding: '0.6rem 0.65rem', borderBottom: '1px solid #edf0f3', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#132030' }}>Lucid CMS</span>
-            <div style={{ display: 'flex', gap: '0.2rem' }}>
+            <div className="cms-topbar-actions" style={{ display: 'flex', gap: '0.2rem' }}>
               <button type="button" onClick={() => setPreviewKey((k) => k + 1)} title="Refresh preview" style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#7a8794', padding: '0.15rem', display: 'flex', alignItems: 'center' }}><LuRefreshCw size={13} /></button>
-              <button type="button" onClick={() => setSidebarCollapsed(true)} title="Collapse sidebar" style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#7a8794', padding: '0.15rem', display: 'flex', alignItems: 'center' }}><LuPanelLeftClose size={13} /></button>
-              <a href="/" title="Back to site" style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#7a8794', padding: '0.15rem', textDecoration: 'none', display: 'flex', alignItems: 'center' }}><LuArrowLeft size={13} /></a>
+              <button className="cms-desktop-only" type="button" onClick={() => setSidebarCollapsed(true)} title="Collapse sidebar" style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#7a8794', padding: '0.15rem', display: 'flex', alignItems: 'center' }}><LuPanelLeftClose size={13} /></button>
+              <a className="cms-desktop-only" href="/" title="Back to site" style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#7a8794', padding: '0.15rem', textDecoration: 'none', display: 'flex', alignItems: 'center' }}><LuArrowLeft size={13} /></a>
+              <button className="cms-mobile-only" type="button" onClick={() => void loadFiles()} disabled={loadingFiles} title="Reload content" style={{ border: 'none', cursor: 'pointer', color: '#7a8794' }}><LuRotateCw size={15} /></button>
+              <button className="cms-mobile-only" type="button" onClick={() => { window.localStorage.removeItem('cms_dashboard_password'); window.location.reload(); }} title="Sign out" style={{ border: 'none', cursor: 'pointer', color: '#7a8794' }}><LuLogOut size={15} /></button>
             </div>
           </div>
 
           {/* Pages / Settings / Notifications toggle */}
-          <div style={{ padding: '0.45rem 0.65rem 0.35rem', display: 'flex', gap: '0.2rem' }}>
+          <div className="cms-primary-tabs" style={{ padding: '0.45rem 0.65rem 0.35rem', display: 'flex', gap: '0.2rem' }}>
             {(['pages', 'settings', 'notifications'] as const).map((tab) => (
               <button
                 key={tab}
@@ -1413,9 +1408,10 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                   position: 'relative',
                 }}
               >
-                {tab === 'pages' ? <LuFileText size={15} /> : tab === 'settings' ? <LuSettings size={15} /> : (
+                {tab === 'pages' ? <><LuFileText size={15} /><span className="cms-mobile-only">Pages</span></> : tab === 'settings' ? <><LuSettings size={15} /><span className="cms-mobile-only">Settings</span></> : (
                   <>
                     <LuBell size={15} />
+                    <span className="cms-mobile-only">Activity</span>
                     {notifications.length > 0 && activeSidebarTab !== 'notifications' && (
                       <span style={{
                         position: 'absolute',
@@ -1435,7 +1431,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
           </div>
 
           {/* Scrollable section list */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '0.35rem 0.5rem' }}>
+          <div className="cms-bottom-sections" style={{ flex: 1, overflowY: 'auto', padding: '0.35rem 0.5rem' }}>
             {activeSidebarTab === 'pages' ? (
               <>
                 {/* Home page sections */}
@@ -1953,7 +1949,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
           </div>
 
           {/* Footer actions */}
-          <div style={{ padding: '0.45rem 0.55rem', borderTop: '1px solid #edf0f3', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="cms-sidebar-footer" style={{ padding: '0.45rem 0.55rem', borderTop: '1px solid #edf0f3', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <button
               type="button"
               onClick={() => void loadFiles()}
@@ -1976,6 +1972,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
         {panelOpen && (selectedFile || gridView || analyticsOpen) ? (
           <div
             ref={panelRef}
+            className="cms-editor-panel"
             style={{
               position: 'fixed',
               top: panelPos.y,
@@ -1996,6 +1993,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
           >
             {/* Resize handle on right edge */}
             <div
+              className="cms-editor-resize-handle"
               onMouseDown={(e) => {
                 e.preventDefault();
                 document.body.style.cursor = 'ew-resize';
