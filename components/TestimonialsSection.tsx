@@ -181,8 +181,8 @@ export default function TestimonialsSection({ heading, testimonials }: Testimoni
                   }}
                 >
                   <div className="mb-4 flex flex-col  gap-4 font-bold text-md">
-                    <span className="flex gap-1 sm:flex-row flex-col flex-wrap ">
-                      <span className="px-1 flex items-center  justify-center  text-[#983A12]! bg-white sm:bg-[#983A12] grow-0 rounded-full w-fit ">
+                    <span className="flex gap-2 sm:flex-row flex-col flex-wrap sm:text-black/20 ">
+                      <span className="sm:pr-3 sm:pl-1 px-1 flex items-center  justify-center  text-[#983A12]! sm:text-[#FFE1CD]! bg-white sm:bg-[#983A12] grow-0 rounded-full w-fit ">
                         <Image
                           src="/new-spark.svg"
                           alt="Divider Shape"
@@ -190,13 +190,13 @@ export default function TestimonialsSection({ heading, testimonials }: Testimoni
                           height={16}
                           className="z-1  inset-0 object-cover brightness-200 grayscale-100"
                         />
-                        {testimonial.author},
+                        {testimonial.author}
                       </span>
                       {testimonial.company}
                     </span>
 
                   </div>
-                  <p className="text-base font-medium leading-8 text-black  max-sm:text-white! max-sm:pr-8 sm:text-lg md:text-xl md:leading-9">
+                  <p className="text-base font-medium leading-8 sm:text-black! text-white! max-sm:pr-8 sm:text-lg md:text-xl md:leading-9">
                     {testimonial.quote}
                   </p>
                 </article>
@@ -204,18 +204,18 @@ export default function TestimonialsSection({ heading, testimonials }: Testimoni
             })}
           </motion.div>
         </div>
-      <div className="  relative  sm:absolute  sm:bottom-20  text-black  z-10 sm:mx-auto   px-10  w-80 justify-between gap-4 flex">
+      <div className="  relative  sm:absolute  sm:bottom-20  text-black  z-10 sm:mx-auto sm:inset-x-0  h-fit   px-5  w-80 justify-between gap-4 flex">
         <button
           onClick={() =>
             setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length)
           }
-          className="h-16 w-16 rounded-full outline  bg-[#FFE1CD]! flex items-center text-2xl "
+          className=" p-3 rounded-full active:outline  cursor-pointer hover:bg-white bg-[#FFE1CD]! flex items-center text-2xl "
         >
           <FaArrowLeft />
         </button>
         <button
           onClick={() => setCurrentTestimonial((prev) => (prev + 1) % testimonials.length)}
-          className="h-16 w-16 rounded-full text-2xl  flex items-center  bg-[#FFE1CD] transition"
+          className= "p-3 rounded-full focus:outline text-2xl cursor-pointer hover:bg-white duration-75 flex items-center  bg-[#FFE1CD] transition"
         >
           <FaArrowRight />
         </button>

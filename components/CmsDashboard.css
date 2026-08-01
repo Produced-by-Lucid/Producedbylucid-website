@@ -34,7 +34,15 @@
     background: #fff;
   }
 
-  .cms-sidebar-collapsed-button { display: none !important; }
+  .cms-sidebar-collapsed-button {
+    display: flex !important;
+    top: calc(12px + env(safe-area-inset-top)) !important;
+  }
+
+  .cms-ui-hidden .cms-preview {
+    inset: 0;
+    min-height: 100dvh;
+  }
 
   .cms-sidebar {
     pointer-events: none;

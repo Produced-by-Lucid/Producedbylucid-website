@@ -1293,7 +1293,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     <>
 
       <main
-        className="cms-dashboard"
+        className={`cms-dashboard${sidebarCollapsed ? ' cms-ui-hidden' : ''}`}
         style={{
           position: 'relative',
           width: '100vw',
@@ -1379,8 +1379,8 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
             <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#132030' }}>Lucid CMS</span>
             <div className="cms-topbar-actions" style={{ display: 'flex', gap: '0.2rem' }}>
               <button type="button" onClick={() => setPreviewKey((k) => k + 1)} title="Refresh preview" style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#7a8794', padding: '0.15rem', display: 'flex', alignItems: 'center' }}><LuRefreshCw size={13} /></button>
-              <button className="cms-desktop-only" type="button" onClick={() => setSidebarCollapsed(true)} title="Collapse sidebar" style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#7a8794', padding: '0.15rem', display: 'flex', alignItems: 'center' }}><LuPanelLeftClose size={13} /></button>
-              <a className="cms-desktop-only" href="/" title="Back to site" style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#7a8794', padding: '0.15rem', textDecoration: 'none', display: 'flex', alignItems: 'center' }}><LuArrowLeft size={13} /></a>
+              <button type="button" onClick={() => setSidebarCollapsed(true)} title="Hide interface" aria-label="Hide interface" style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#7a8794', padding: '0.15rem', display: 'flex', alignItems: 'center' }}><LuPanelLeftClose size={13} /></button>
+              <a href="/" title="Return to site" aria-label="Return to site" style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#7a8794', padding: '0.15rem', textDecoration: 'none', display: 'flex', alignItems: 'center' }}><LuArrowLeft size={13} /></a>
               <button className="cms-mobile-only" type="button" onClick={() => void loadFiles()} disabled={loadingFiles} title="Reload content" style={{ border: 'none', cursor: 'pointer', color: '#7a8794' }}><LuRotateCw size={15} /></button>
               <button className="cms-mobile-only" type="button" onClick={() => { window.localStorage.removeItem('cms_dashboard_password'); window.location.reload(); }} title="Sign out" style={{ border: 'none', cursor: 'pointer', color: '#7a8794' }}><LuLogOut size={15} /></button>
             </div>

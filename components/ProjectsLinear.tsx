@@ -132,9 +132,10 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
       
 
       <div className="relative z-10 w-full  ">
-        <h2 className="section-title-text mb-8 text-center text-sm font-semibold uppercase tracking-[0.35em] text-white sm:text-base sm:tracking-[0.8em]">
+        <h2 className="mb-8 text-center text-sm font-semibold uppercase text-4xl sm:text-7xl text-white ">
           {eyebrow || 'Featured Projects'}
         </h2>
+
 
 
         <div
