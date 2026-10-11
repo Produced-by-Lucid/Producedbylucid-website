@@ -166,7 +166,7 @@ export default function HomePageClient({
     <div className="relative min-h-screen w-full overflow-x-clip bg-[#19532b]">
       {!loaded && <LoadingScreen images={preloadImages} onDone={() => setLoaded(true)} />}
       <div
-        className="pointer-events-none fixed inset-0 z-50 opacity-20 mix-blend-overlay"
+        className="pointer-events-none fixed inset-0 z-50 opacity-0 mix-blend-overlay"
         style={{
           backgroundImage: 'url(/noise-tv.gif)',
           backgroundRepeat: 'repeat',

@@ -24,7 +24,7 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
   const lastPointerXRef = useRef(0);
   const activePointerIdRef = useRef<number | null>(null);
 
-  const loopCards = useMemo(() => [...cards, ...cards], [cards]);
+  const loopCards = useMemo(() => cards, [cards]);
  
 
   useEffect(() => {
@@ -55,7 +55,8 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
 
       gsap.set(track, { xPercent: 0 });
       loopTweenRef.current = gsap.to(track, {
-        xPercent: -90,
+        // Two equal groups make half the track the exact loop boundary.
+        xPercent: -50,
         duration: 34,
         ease: 'none',
         repeat: -1,
@@ -98,7 +99,7 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
     activePointerIdRef.current = event.pointerId;
     lastPointerXRef.current = event.clientX;
     event.currentTarget.setPointerCapture(event.pointerId);
-    setMotionSpeed(0, 0.45);
+    setMotionSpeed(0, 0.35);
   };
 
   const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -131,8 +132,8 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
 
       
 
-      <div className="relative z-10 w-full  ">
-        <h2 className="mb-8 text-center text-sm font-semibold uppercase text-4xl sm:text-7xl text-white ">
+      <div className="sm:top-20 sm:inset-x-0 relative sm:absolute z-10 w-full  ">
+        <h2 className="mb-8 text-center text-3xl font-semibold uppercase text-4xl sm:text-7xl text-white ">
           {eyebrow || 'Featured Projects'}
         </h2>
 
@@ -161,18 +162,24 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
 
             <div
               ref={marqueeTrackRef}
-              className="projects-linear-track relative mb-12 flex w-max items-center justify-center gap-[10vw] pt-12 sm:mb-20 sm:gap-[10vw] sm:pt-32"
+              className="projects-linear-track relative mb-12 flex w-max items-center pt-12 sm:mb-20 sm:pt-32"
               
               
             >
-              {loopCards.map((card, index) => (
+              {[0, 1].map((groupIndex) => (
                 <div
-                  key={`${card.title}-${index}`}
-                  className="shrink-0 will-change-transform"
+                  key={groupIndex}
+                  aria-hidden={groupIndex === 1}
+                  className="flex shrink-0 items-center gap-[10vw] pr-[10vw]"
                 >
+                  {loopCards.map((card, index) => (
+                    <div
+                      key={`${card.title}-${index}`}
+                      className="shrink-0 will-change-transform"
+                    >
 
 
-                <a href={card.href || '#'} className="block" draggable={false}>
+                <a href={card.href || '#'} className="block" draggable={false} tabIndex={groupIndex === 1 ? -1 : undefined}>
                   <article
                     className="projects-linear-card group w-[65dvw] bg-[#fdf8ec] sm:p-1 px-2 pt-2 shadow-5xl transition-[width,padding,box-shadow] duration-400 ease-out sm:w-55 sm:hover:w-[26vw] sm:hover:p-3 sm:hover:shadow-[0_14px_50px_rgba(0,0,0,0.35)]"
                   >
@@ -202,8 +209,10 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
                     </div>
                   </article>
                 </a>
-              </div>
-            ))}
+                    </div>
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
         </div>

@@ -46,7 +46,7 @@ export default function OurServicesGrid({ sectionRef, eyebrow, services }: OurSe
     <section
       id="services"
       ref={sectionRef}
-      className="relative z-20 min-h-screen pt-30  bg-white px-4 pb-12 sm:px-6 sm:pb-80"
+      className="relative z-20 min-h-screen pt-30  bg-white px-4 pb-12 sm:px-6 sm:pb-30"
     >
        {/* <Image
               src="/divider-shape.svg"
