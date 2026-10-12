@@ -276,7 +276,7 @@ export function cmsPasswordIsValid(password: string | null) {
   const expectedPassword = process.env.CMS_DASHBOARD_PASSWORD;
 
   if (!expectedPassword) {
-    return true;
+    return false;
   }
 
   return password === expectedPassword;

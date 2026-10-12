@@ -13,7 +13,7 @@ npm install
 2. Copy `.env.example` to `.env.local`.
 
 For local development, `NEXT_PUBLIC_SITE_URL` is required.
-`CMS_DASHBOARD_PASSWORD` is optional but strongly recommended before deploying.
+`CMS_DASHBOARD_PASSWORD` is required to access the CMS locally and in production.
 
 3. Start the app:
 
@@ -41,7 +41,7 @@ API routes used by the dashboard:
 - `GET /api/cms/files/[...path]` reads a file
 - `PUT /api/cms/files/[...path]` saves file content
 
-If `CMS_DASHBOARD_PASSWORD` is set, requests must include it in the `x-cms-password` header. The dashboard handles this automatically from the password field.
+CMS requests must include `CMS_DASHBOARD_PASSWORD` in the `x-cms-password` header. The dashboard handles this automatically from the password field.
 
 ## Editable content
 
@@ -64,7 +64,7 @@ For production, set these variables:
 - `NEXT_PUBLIC_SITE_URL`
 - `CMS_DASHBOARD_PASSWORD`
 
-If `CMS_DASHBOARD_PASSWORD` is not set, the CMS remains open to anyone who can access `/admin`.
+If `CMS_DASHBOARD_PASSWORD` is not set, all CMS API requests are rejected. Configure it as a server-side environment variable in your hosting provider and redeploy. Do not use a `NEXT_PUBLIC_` prefix for this secret.
 
 ## Build
 
