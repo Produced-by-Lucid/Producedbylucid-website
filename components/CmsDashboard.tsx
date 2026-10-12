@@ -1,6 +1,8 @@
 'use client';
 
 import '@fontsource-variable/instrument-sans/index.css';
+import './cms-dashboard.css';
+import { ADMIN_SESSION_KEY } from '@/lib/admin-session';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import { LuRefreshCw, LuPanelLeftClose, LuPanelLeftOpen, LuArrowLeft, LuGripVertical, LuX, LuSave, LuChevronDown, LuChevronRight, LuLogOut, LuRotateCw, LuPencil, LuPlus, LuTrash2, LuVideo, LuImage } from 'react-icons/lu';
 import BlogEditor from './BlogEditor';
@@ -688,6 +690,9 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
 
   // --- UI state ---
   const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('pages');    // Pages vs Settings sidebar tab
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
+  const [mobileSection, setMobileSection] = useState<'home' | 'blog' | 'projects'>('home');
+  const drawerSwipeStart = useRef<number | null>(null);
   const [homeOpen, setHomeOpen] = useState(true);        // Home page accordion expanded
   const [blogOpen, setBlogOpen] = useState(true);        // Blog accordion expanded
   const [projectsOpen, setProjectsOpen] = useState(false); // Projects accordion expanded
@@ -710,6 +715,15 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
   const panelRef = useRef<HTMLDivElement>(null);        // The floating panel element
   const [dragging, setDragging] = useState(false);      // Whether the user is currently dragging the panel
   const dragOffsetRef = useRef({ x: 0, y: 0 });        // Offset from mouse to panel top-left when drag started
+
+  useEffect(() => {
+    if (!mobileMoreOpen && !panelOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { setMobileMoreOpen(false); setPanelOpen(false); }
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [mobileMoreOpen, panelOpen]);
 
   // --- Effect: load file list on mount ---
   useEffect(() => {
@@ -815,6 +829,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
 
   /** Start dragging the floating panel from its header bar. */
   function startPanelDrag(e: React.MouseEvent) {
+    if (window.matchMedia('(max-width: 767px)').matches) return;
     e.preventDefault();
     dragOffsetRef.current = {
       x: e.clientX - panelPos.x,
@@ -1045,6 +1060,10 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
 
   /** Selects a file in the sidebar. */
   function selectFile(filePath: string) {
+    setMobileMoreOpen(false);
+    if (filePath.startsWith(BLOG_POSTS_PREFIX)) setMobileSection('blog');
+    else if (filePath.startsWith(PROJECTS_PREFIX)) setMobileSection('projects');
+    else if (filePath === HOME_PAGE_FILE) setMobileSection('home');
     setSelectedFile(filePath);
     setGridView(null);
     setPanelOpen(true);
@@ -1052,6 +1071,8 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
 
   /** Selects a standalone homepage section form. */
   function openHomeSection(sectionKey: string) {
+    setMobileMoreOpen(false);
+    setMobileSection('home');
     // For projects/testimonials, open the grid picker instead of the home form
     if (sectionKey === 'projectsSection' && projectFiles.length > 0) {
       setGridView('projects');
@@ -1124,11 +1145,33 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
           color: '#122130',
         }}
       >
+        <header className="cms-mobile-top" aria-label="CMS navigation">
+          <div className="cms-mobile-tabs">
+            <strong>Lucid CMS</strong>
+            <button type="button" aria-pressed={activeSidebarTab === 'pages'} onClick={() => { setActiveSidebarTab('pages'); setPanelOpen(false); setMobileMoreOpen(false); }}>Pages</button>
+            <button type="button" aria-pressed={activeSidebarTab === 'settings'} onClick={() => { setActiveSidebarTab('settings'); setPanelOpen(false); setMobileMoreOpen(false); }}>Settings</button>
+          </div>
+        </header>
+        {mobileMoreOpen && <button type="button" className="cms-mobile-dismiss" aria-label="Close more options" onClick={() => setMobileMoreOpen(false)} />}
+        <button type="button" className="cms-mobile-more" aria-label={mobileMoreOpen ? 'Close more options' : 'More options'} aria-expanded={mobileMoreOpen} aria-controls="cms-sidebar" onClick={() => setMobileMoreOpen(open => !open)}><span aria-hidden="true">•••</span></button>
+        <nav className="cms-mobile-bottom" aria-label={activeSidebarTab === 'pages' ? 'Page sections' : 'Settings sections'}>
+          <div className="cms-mobile-bottom-heading">{activeSidebarTab === 'pages' ? 'Pages' : 'Settings'}<span>Tap to edit</span></div>
+          <div className="cms-mobile-section-list">
+            {activeSidebarTab === 'pages' ? <>
+              <button type="button" aria-current={mobileSection === 'home' ? 'true' : undefined} disabled={loadingFiles || !files.includes(HOME_PAGE_FILE)} onClick={() => openHomeSection(HOME_PAGE_SECTIONS[0].key)}>Home</button>
+              <button type="button" aria-current={mobileSection === 'blog' ? 'true' : undefined} disabled={loadingFiles || !blogFiles.length} onClick={() => selectFile(blogFiles[0])}>Blog</button>
+              <button type="button" aria-current={mobileSection === 'projects' ? 'true' : undefined} disabled={loadingFiles || !projectFiles.length} onClick={() => selectFile(projectFiles[0])}>Projects</button>
+            </> : <button type="button" aria-current={selectedFile === SITE_SETTINGS_FILE ? 'true' : undefined} onClick={() => selectFile(SITE_SETTINGS_FILE)}>Site settings</button>}
+          </div>
+          {error && !panelOpen && <p className="cms-mobile-nav-error" role="alert">{error}</p>}
+        </nav>
+        {panelOpen && <button type="button" className="cms-drawer-backdrop" aria-label="Hide form" onClick={() => setPanelOpen(false)} />}
         {/* Full-screen preview iframe */}
         <iframe
           key={previewKey}
           src={`${previewUrl}${previewUrl.includes('?') ? '&' : '?'}t=${previewKey}`}
           title="Site preview"
+          className="cms-preview"
           style={{ width: '100%', height: '100%', border: 'none', display: 'block', pointerEvents: dragging || resizing ? 'none' : 'auto' }}
         />
 
@@ -1150,6 +1193,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
             type="button"
             onClick={() => setSidebarCollapsed(false)}
             title="Expand sidebar"
+            className="cms-desktop-expand"
             style={{
               position: 'fixed',
               top: 12,
@@ -1174,6 +1218,9 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
           </button>
         ) : null}
         <nav
+          id="cms-sidebar"
+          aria-label="More CMS options"
+          className={`cms-sidebar ${mobileMoreOpen ? 'cms-more-open' : ''}`}
           style={{
             position: 'fixed',
             top: 12,
@@ -1208,7 +1255,13 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
               <button
                 key={tab}
                 type="button"
-                onClick={() => setActiveSidebarTab(tab)}
+                onClick={() => {
+                  setActiveSidebarTab(tab);
+                  if (window.matchMedia('(max-width: 767px)').matches) {
+                    if (tab === 'settings') selectFile(SITE_SETTINGS_FILE);
+                    else openHomeSection(activeHomeSection);
+                  }
+                }}
                 style={{
                   flex: 1,
                   border: 'none',
@@ -1686,7 +1739,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
             </button>
             <button
               type="button"
-              onClick={() => { window.localStorage.removeItem('cms_dashboard_password'); window.location.reload(); }}
+              onClick={() => { window.localStorage.removeItem(ADMIN_SESSION_KEY); window.localStorage.removeItem('cms_dashboard_password'); window.location.reload(); }}
               style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.72rem', color: '#7a8794', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}
             >
               <LuLogOut size={11} /> Sign out
@@ -1695,8 +1748,11 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
         </nav>
 
         {/* ── Floating form editor panel (appears on section click) ── */}
-        {panelOpen && (selectedFile || gridView) ? (
+        {(panelOpen || selectedFile) && (selectedFile || gridView) ? (
           <div
+            className={`cms-editor ${panelOpen ? 'cms-editor-open' : 'cms-editor-desktop-closed'}`}
+            aria-hidden={!panelOpen}
+            inert={!panelOpen}
             ref={panelRef}
             style={{
               position: 'fixed',
@@ -1717,6 +1773,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
           >
             {/* Resize handle on right edge */}
             <div
+              className="cms-editor-resize"
               onMouseDown={(e) => {
                 e.preventDefault();
                 document.body.style.cursor = 'ew-resize';
@@ -1736,6 +1793,17 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
             {/* Drag handle header */}
             <div
               onMouseDown={startPanelDrag}
+              className="cms-editor-header"
+              onPointerDown={event => {
+                if (!window.matchMedia('(max-width: 767px)').matches || (event.target as HTMLElement).closest('button')) return;
+                drawerSwipeStart.current = event.clientY;
+                event.currentTarget.setPointerCapture(event.pointerId);
+              }}
+              onPointerUp={event => {
+                if (drawerSwipeStart.current !== null && event.clientY - drawerSwipeStart.current > 50) setPanelOpen(false);
+                drawerSwipeStart.current = null;
+              }}
+              onPointerCancel={() => { drawerSwipeStart.current = null; }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -1749,9 +1817,10 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-                <LuGripVertical size={14} style={{ color: '#b0b8c1', flexShrink: 0 }} />
+                <LuGripVertical className="cms-editor-grip" size={14} style={{ color: '#b0b8c1', flexShrink: 0 }} />
                 <span style={{ fontWeight: 700, fontSize: '0.82rem', color: '#132030', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {editorTitle}
+                  <span className="cms-desktop-editor-title">{editorTitle}</span>
+                  <span className="cms-mobile-editor-title">{activeSidebarTab === 'settings' ? 'Settings' : mobileSection === 'home' ? 'Home' : mobileSection === 'blog' ? 'Blog' : 'Projects'}</span>
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
@@ -1800,8 +1869,10 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                 ) : null}
                 <button
                   type="button"
-                  onClick={() => { setPanelOpen(false); setGridView(null); }}
-                  title="Close editor panel"
+                  onClick={() => setPanelOpen(false)}
+                  title="Hide form"
+                  aria-label="Hide form"
+                  className="cms-editor-close"
                   style={{
                     border: 'none',
                     background: 'none',
@@ -1819,8 +1890,25 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
               </div>
             </div>
 
+            {activeSidebarTab === 'pages' && (
+              <nav className="cms-mobile-form-picker" aria-label="Choose form">
+                {(mobileSection === 'home'
+                  ? HOME_PAGE_SECTIONS
+                  : (mobileSection === 'blog' ? blogFiles : projectFiles).map(file => ({ key: file, label: contentLabel(file) }))
+                ).map(form => {
+                  const activeForm = mobileSection === 'home'
+                    ? gridView === 'projects' ? 'projectsSection' : gridView === 'testimonials' ? 'testimonialsSection' : activeHomeSection
+                    : selectedFile;
+                  return <button type="button" key={form.key} aria-pressed={activeForm === form.key} onClick={event => {
+                    event.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+                    if (mobileSection === 'home') openHomeSection(form.key);
+                    else selectFile(form.key);
+                  }}>{form.label}</button>;
+                })}
+              </nav>
+            )}
             {/* Scrollable editor body */}
-            <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '0.65rem 0.7rem' }}>
+            <div className="cms-editor-body" style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '0.65rem 0.7rem' }}>
               {gridView ? (
                 loadingMulti ? (
                   <p style={{ color: '#4a6276', padding: '0.5rem 0', fontSize: '0.85rem' }}>Loading all items...</p>

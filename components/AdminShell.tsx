@@ -1,48 +1,41 @@
-// ---------------------------------------------------------------------------
-// AdminShell — Auth gate wrapper for the /admin route.
-//
-// On mount it checks localStorage for a previously saved password:
-//   • Found  → renders CmsDashboard immediately (returning user).
-//   • Not found  → renders AdminLogin so the user can authenticate.
-//
-// The `ready` flag prevents a flash of the login form on first render
-// while we're reading from localStorage (which requires the browser).
-// ---------------------------------------------------------------------------
-
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ADMIN_SESSION_KEY, readAdminSession, type AdminSession } from '@/lib/admin-session';
 import AdminLogin from './AdminLogin';
 import CmsDashboard from './CmsDashboard';
 
-/** localStorage key — must match the key used in AdminLogin. */
-const PASSWORD_STORAGE_KEY = 'cms_dashboard_password';
-
-/**
- * Wraps the dashboard in a simple auth check.
- * If the user has a stored password → CmsDashboard.
- * Otherwise → AdminLogin.
- */
+/** Requires a fresh login every hour, including when the dashboard stays open. */
 export default function AdminShell() {
-  const [password, setPassword] = useState<string | null>(null);  // Validated CMS password (null = not logged in)
-  const [ready, setReady] = useState(false);                      // True once localStorage has been read
+  const [session, setSession] = useState<AdminSession | null>(null);
+  const [ready, setReady] = useState(false);
 
-  // On mount: try restoring session from localStorage
   useEffect(() => {
-    const stored = window.localStorage.getItem(PASSWORD_STORAGE_KEY);
-    if (stored) {
-      setPassword(stored);
-    }
+    setSession(readAdminSession());
     setReady(true);
   }, []);
 
-  if (!ready) {
-    return null;
-  }
+  useEffect(() => {
+    const restoreSession = () => setSession(readAdminSession());
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === ADMIN_SESSION_KEY || event.key === null) restoreSession();
+    };
+    // Recheck suspended tabs on return and synchronize sign-ins across tabs.
+    window.addEventListener('focus', restoreSession);
+    document.addEventListener('visibilitychange', restoreSession);
+    window.addEventListener('storage', onStorage);
+    const timeout = session
+      ? window.setTimeout(restoreSession, Math.max(0, session.expiresAt - Date.now()))
+      : undefined;
+    return () => {
+      window.clearTimeout(timeout);
+      window.removeEventListener('focus', restoreSession);
+      document.removeEventListener('visibilitychange', restoreSession);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, [session]);
 
-  if (!password) {
-    return <AdminLogin onAuthenticated={(pw) => setPassword(pw)} />;
-  }
-
-  return <CmsDashboard initialPassword={password} />;
+  if (!ready) return null;
+  if (!session) return <AdminLogin onAuthenticated={setSession} />;
+  return <CmsDashboard key={session.expiresAt} initialPassword={session.password} />;
 }

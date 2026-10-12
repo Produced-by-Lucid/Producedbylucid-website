@@ -16,8 +16,7 @@
 import '@fontsource-variable/instrument-sans/index.css';
 import { type CSSProperties, type FormEvent, useState } from 'react';
 
-/** localStorage key shared with AdminShell to persist the session. */
-const PASSWORD_STORAGE_KEY = 'cms_dashboard_password';
+import { ADMIN_SESSION_DURATION_MS, ADMIN_SESSION_KEY, type AdminSession } from '@/lib/admin-session';
 
 /** Shared style for the password text input. */
 const inputStyle: CSSProperties = {
@@ -35,7 +34,7 @@ const inputStyle: CSSProperties = {
  * Login form displayed when no valid session exists.
  * @param onAuthenticated — callback fired with the validated password string.
  */
-export default function AdminLogin({ onAuthenticated }: { onAuthenticated: (password: string) => void }) {
+export default function AdminLogin({ onAuthenticated }: { onAuthenticated: (session: AdminSession) => void }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -56,8 +55,9 @@ export default function AdminLogin({ onAuthenticated }: { onAuthenticated: (pass
         return;
       }
 
-      window.localStorage.setItem(PASSWORD_STORAGE_KEY, password);
-      onAuthenticated(password);
+      const session = { password, expiresAt: Date.now() + ADMIN_SESSION_DURATION_MS };
+      window.localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
+      onAuthenticated(session);
     } catch {
       setError('Unable to connect. Please try again.');
       setLoading(false);

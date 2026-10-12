@@ -72,10 +72,10 @@ export default function Hero({ content }: HeroProps) {
   }, []);
 
   return (
-    <section id="home" ref={heroRef} className="relative flex min-h-[70svh] w-full scroll-mt-24 flex-col items-center justify-center gap-6 px-4 py-12 sm:gap-8 sm:px-6 sm:py-16">
+    <section id="home" ref={heroRef} className="relative flex min-h-[60svh] w-full scroll-mt-24 flex-col items-center justify-center gap-4 px-4 py-12 sm:gap-4 sm:px-6 sm:pt-16">
       {/* <Image src="/pbl-round.svg" alt="Lucid logo" width={200} height={100} className="z-1 outline relative " /> */}
 
-      <div ref={logoRef} className="relative flex h-40 w-40 shrink-0 items-center justify-center sm:h-52 sm:w-52">
+      <div ref={logoRef} className="relative flex h-40 w-40 shrink-0 -mb-12 items-center justify-center sm:h-52 sm:w-52">
         <LogoSpriteAnimation className="flex h-full w-full items-center justify-center [&_img]:h-full [&_img]:w-full [&_img]:object-contain" />
       </div>
 

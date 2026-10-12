@@ -11,6 +11,7 @@
   "dependencies": {
     "@fontsource-variable/instrument-sans": "^5.2.8",
     "@fontsource/zilla-slab": "^5.2.8",
+    "@opentelemetry/api": "^1.9.0",
     "@studio-freight/lenis": "^1.0.42",
     "@tiptap/extension-image": "^3.22.2",
     "@tiptap/extension-link": "^3.22.2",
@@ -31,7 +32,8 @@
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "19.2.3",
     "react-icons": "^5.6.0",
-    "react-markdown": "^10.1.0"
+    "react-markdown": "^10.1.0",
+    "stampstack": "^0.2.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

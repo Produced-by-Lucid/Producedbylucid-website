@@ -1,0 +1,63 @@
+.cms-mobile-top, .cms-mobile-more, .cms-mobile-dismiss, .cms-mobile-bottom,
+.cms-drawer-backdrop, .cms-mobile-hide-label,
+.cms-mobile-editor-title, .cms-mobile-form-picker { display: none; }
+@media (min-width: 768px) {
+  .cms-editor-desktop-closed { display: none !important; }
+}
+@media (max-width: 767px) {
+  .cms-dashboard {
+    --cms-form-height: calc(100px + env(safe-area-inset-bottom));
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) var(--cms-form-height);
+    height: 100dvh !important;
+    width: 100% !important;
+    background: #f5f6f8;
+  }
+  .cms-mobile-top { display: flex; flex-direction: column; gap: 8px; grid-row: 1; padding: calc(8px + env(safe-area-inset-top)) 12px 10px; background: #fff; border-bottom: 1px solid #e7edf2; }
+  .cms-mobile-tabs { display: flex; align-items: center; gap: 8px; }
+  .cms-mobile-tabs strong { margin-right: auto; font-size: 14px; }
+  .cms-mobile-tabs button { border: 0; border-radius: 10px; padding: 10px 16px; min-height: 44px; background: #f1f3f5; color: #132030; font-size: 13px; font-weight: 600; }
+  .cms-mobile-tabs button[aria-pressed=true] { background: #132030; color: white; }
+  .cms-mobile-top select { width: 100%; min-width: 0; min-height: 44px; border: 1px solid #dce3e9; border-radius: 10px; padding: 8px 12px; color: #132030; background: #fafbfc; font: inherit; font-size: 16px; }
+  .cms-preview { grid-row: 2; min-height: 0; min-width: 0; }
+  .cms-desktop-expand { display: none !important; }
+  .cms-sidebar { display: none !important; }
+  .cms-sidebar.cms-more-open { display: flex !important; top: auto !important; left: auto !important; right: 12px; bottom: calc(var(--cms-form-height) + 72px) !important; width: min(320px, calc(100% - 24px)) !important; max-height: calc(100% - var(--cms-form-height) - 88px); z-index: 1300 !important; }
+  .cms-sidebar button, .cms-sidebar a { min-height: 44px; }
+  .cms-sidebar button[title='Collapse sidebar'] { display: none !important; }
+  .cms-sidebar button[title='Refresh preview']::after { content: 'Refresh view'; margin-left: 6px; font-size: 12px; }
+  .cms-sidebar a[title='Back to site']::after { content: 'View site'; margin-left: 6px; font-size: 12px; }
+  .cms-sidebar > div:first-child { flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
+  .cms-sidebar > div:last-child { flex-shrink: 0; }
+  .cms-mobile-more { display: flex; align-items: center; justify-content: center; position: absolute; right: max(12px, env(safe-area-inset-right)); bottom: calc(var(--cms-form-height) + 12px); width: 48px; height: 48px; border: 1px solid #dce3e9; border-radius: 50%; background: #132030; color: white; font-size: 18px; letter-spacing: 2px; box-shadow: 0 6px 20px #12213030; z-index: 1300; }
+  .cms-mobile-dismiss { display: block; position: absolute; inset: 0; border: 0; background: #12213026; z-index: 1200; }
+  .cms-editor { position: absolute !important; bottom: 0; top: auto !important; left: 0 !important; width: 100% !important; height: 90svh; max-width: none !important; max-height: none !important; min-height: 0; border-radius: 18px 18px 0 0 !important; box-sizing: border-box; padding-bottom: env(safe-area-inset-bottom); z-index: 1500 !important; transform: translateY(105%); visibility: hidden; transition: transform 260ms ease, visibility 260ms; }
+  .cms-editor.cms-editor-open { transform: translateY(0); visibility: visible; }
+  .cms-editor-resize, .cms-editor-grip { display: none !important; }
+  .cms-mobile-hide-label { display: inline; margin-left: 4px; font-size: 13px; }
+  .cms-desktop-editor-title { display: none; }
+  .cms-mobile-editor-title { display: inline; }
+  .cms-mobile-form-picker { display: flex; gap: 8px; flex-shrink: 0; padding: 6px 12px; border-bottom: 1px solid #edf0f3; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; -ms-overflow-style: none; }
+  .cms-mobile-form-picker::-webkit-scrollbar { display: none; }
+  .cms-mobile-form-picker button { flex-shrink: 0; min-height: 44px; padding: 8px 12px; border: 1px solid transparent; border-radius: 8px; font: inherit; font-size: 13px; white-space: nowrap; color: #697b8d; background: transparent; cursor: pointer; }
+  .cms-mobile-form-picker button[aria-pressed=true] { color: #a74d20; background: #fff3eb; border-color: #de692e; font-weight: 700; }
+  .cms-mobile-form-picker button:focus-visible { outline: 2px solid #de692e; outline-offset: -2px; }
+  .cms-drawer-backdrop { display: block; position: absolute; inset: 0; border: 0; background: #12213055; z-index: 1400; }
+  .cms-editor-header { cursor: default !important; touch-action: none; }
+  .cms-editor-header button { min-height: 44px; padding-inline: 12px !important; }
+  .cms-editor-body { overscroll-behavior: contain; overflow-x: hidden; }
+  .cms-editor-body input, .cms-editor-body textarea, .cms-editor-body select { font-size: 16px !important; max-width: 100%; min-width: 0; }
+  .cms-editor-body button { min-height: 40px; }
+  .cms-mobile-bottom { display: flex; grid-row: 3; flex-direction: column; gap: 10px; min-height: 0; padding: 12px 12px calc(12px + env(safe-area-inset-bottom)); background: #fff; border-top: 1px solid #e7edf2; }
+  .cms-mobile-bottom-heading { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 700; }
+  .cms-mobile-bottom-heading span { color: #697b8d; font-weight: 400; font-size: 12px; }
+  .cms-mobile-section-list { display: flex; flex-wrap: wrap; gap: 8px; overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+  .cms-mobile-section-list button { flex-shrink: 0; max-width: 100%; min-height: 44px; padding: 8px 14px; border: 1px solid #e1e6eb; border-radius: 10px; background: #f6f8fa; color: #425466; font-size: 13px; text-align: left; overflow-wrap: anywhere; }
+  .cms-mobile-section-list button[aria-current=true] { background: #fff3eb; color: #a74d20; border-color: #de692e; }
+  .cms-mobile-section-list button { flex: 1; text-align: center; }
+  .cms-mobile-section-list button:disabled { opacity: .45; }
+  .cms-mobile-nav-error { margin: 0; font-size: 12px; color: #9f2538; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cms-editor { transition: none !important; }
+}
