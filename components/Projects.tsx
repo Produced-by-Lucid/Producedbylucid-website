@@ -256,7 +256,7 @@ export default function Projects() {
 
         <div className="relative z-10 w-full max-w-6xl flex flex-col items-center gap-10 py-20">
           <div className="text-center">
-            <p className="text-sm font-semibold invert tracking-[2.35em] uppercase text-cream/70 mb-[3rem">Featured Works</p>
+            <h3 className="invert uppercase text-cream/70 mb-[3rem tracking-normal">Featured Works</h3>
           </div>
           <div className="w-full flex items-center justify-between gap-2 sm:gap-6">
             <button

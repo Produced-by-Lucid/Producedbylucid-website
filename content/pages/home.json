@@ -1,4 +1,14 @@
 {
+  "sectionVisibility": {
+    "hero": true,
+    "projects": true,
+    "clientLogos": true,
+    "intro": true,
+    "services": true,
+    "testimonials": true,
+    "blog": true,
+    "footer": true
+  },
   "hero": {
     "mobileHeadline": "Bold ideas.\nElevated experiences.",
     "curvedHeadline": "bold ideas. elevated experiences",
@@ -34,14 +44,17 @@
     "items": [
       {
         "title": "Experience Strategy",
+        "icon": "/services-img/a.svg",
         "content": "We start with your goals and define the idea, structure, and flow of the event. The result is a clear plan that ensures every element works together and delivers the intended outcome."
       },
       {
         "title": "Creative Direction",
+        "icon": "/services-img/b.svg",
         "content": "We translate ideas into a distinct look and feel. From visual identity and styling to spatial and sensory design, we ensure every element is cohesive, on-brand, and thoughtfully considered."
       },
       {
         "title": "Event Production ",
+        "icon": "/services-img/c.svg",
         "content": "Our on-site expertise ensures flawless execution, managing every detail from setup to teardown. We handle stage, lighting, sound, screens, branding, decor, catering, entertainment, and everything in between."
       }
     ]

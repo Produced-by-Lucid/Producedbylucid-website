@@ -36,12 +36,14 @@ export default function HomePageClient({
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
+  const visibility = home.sectionVisibility ?? {};
+
   // Collect all above-the-fold and key images for real preloading
   const preloadImages = [
     '/obj.svg',
-    ...home.featureShowcase.slides.map((s) => s.image),
-    ...projects.map((p) => p.image),
-    ...posts.map((p) => p.coverImage),
+    ...(visibility.intro !== false ? home.featureShowcase.slides.map((s) => s.image) : []),
+    ...(visibility.projects !== false ? projects.map((p) => p.image) : []),
+    ...(visibility.blog !== false ? posts.map((p) => p.coverImage) : []),
   ];
 
   return (
@@ -66,30 +68,39 @@ export default function HomePageClient({
         />
       </div>
 
-      <SectionsInViewMotion>
+      {visibility.hero !== false && (
+<SectionsInViewMotion>
         <Hero content={home.hero} />
       </SectionsInViewMotion>
+      )}
 
-      <SectionsInViewMotion>
+      {visibility.projects !== false && (
+<SectionsInViewMotion>
         <ProjectsLinear cards={projects} eyebrow={home.projectsSection.eyebrow} />
       </SectionsInViewMotion>
+      )}
 
-      <SectionsInViewMotion>
+      {visibility.clientLogos !== false && (
+<SectionsInViewMotion>
         <ClientsMarquee className="-mt-10 pb-14 sm:-mt-20 sm:pb-20" />
       </SectionsInViewMotion>
+      )}
 
       <Nav navItems={settings.navItems} cta={settings.navCta} />
 
       <div className="relative z-10 bg-white/80">
-        <SectionsInViewMotion>
+        {visibility.intro !== false && (
+<SectionsInViewMotion>
           <FeaturesSection
             currentSlide={currentSlide}
             setCurrentSlide={setCurrentSlide}
             section={home.featureShowcase}
           />
         </SectionsInViewMotion>
+      )}
         <LandingPage
           settings={settings}
+          visibility={visibility}
           servicesSection={home.servicesSection}
           testimonialsSection={home.testimonialsSection}
           testimonials={testimonials}

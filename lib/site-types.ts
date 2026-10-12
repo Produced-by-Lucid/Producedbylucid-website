@@ -37,6 +37,7 @@ export type SiteSettings = {
 };
 
 export type HomePageContent = {
+  sectionVisibility?: Partial<Record<'hero' | 'projects' | 'clientLogos' | 'intro' | 'services' | 'testimonials' | 'blog' | 'footer', boolean>>;
   hero: {
     mobileHeadline: string;
     curvedHeadline: string;
@@ -62,6 +63,7 @@ export type HomePageContent = {
     items: {
       title: string;
       content: string;
+      icon?: string;
     }[];
   };
   testimonialsSection: {

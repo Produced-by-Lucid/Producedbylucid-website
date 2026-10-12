@@ -82,9 +82,7 @@ export default function TestimonialsSection({ heading, testimonials }: Testimoni
                   fontSize="clamp(60px, 8.5vw, 74px)"
                   fontFamily="var(--font-display), sans-serif"
                   fontWeight="300"
-                  fill="none"
-                  stroke="#FFE1CD"
-                  strokeWidth=".5"
+                  fill="#FFE1CD"
                   letterSpacing="1"
                 >
                   <textPath
@@ -114,7 +112,10 @@ export default function TestimonialsSection({ heading, testimonials }: Testimoni
                 </div>
               </div>
 
-              <p className="mb-10 text-base leading-relaxed max-w-xl md:min-h-[35vh] px-4 flex items-center justify-center transition-all duration-700 ease-out sm:text-lg md:text-xl">
+              <p
+                className="mb-10 text-base leading-relaxed max-w-xl md:min-h-[35vh] px-4 flex items-center justify-center transition-all duration-700 ease-out sm:text-lg md:text-xl"
+                style={{ fontFamily: '"Instrument Sans Variable", "Instrument Sans", sans-serif', fontWeight: 400, fontStretch: 'normal', fontVariationSettings: '"wdth" 100' }}
+              >
                 {testimonials[currentTestimonial].quote}
               </p>
 
@@ -137,7 +138,7 @@ export default function TestimonialsSection({ heading, testimonials }: Testimoni
                           : 'scale-100 text-cream opacity-30 hover:opacity-70'
                         }`}
                     >
-                      <p className="uppercase">{testimonial.author} {' '}</p>
+                      <p className="uppercase font-bold" style={{ fontFamily: 'var(--font-paragraph)', fontStretch: 'normal', fontVariationSettings: 'normal' }}>{testimonial.author} {' '}</p>
                       <span className={index === currentTestimonial  ? 'text-[#DB612D]  ' : 'max-w-xs max-sm:px-12'}>
                         {testimonial.company}
                       </span>

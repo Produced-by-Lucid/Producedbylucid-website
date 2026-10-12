@@ -15,7 +15,7 @@ export default function Hero({ content }: HeroProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const svgStrokeRef = useRef<SVGSVGElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLParagraphElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Set initial states
@@ -72,19 +72,19 @@ export default function Hero({ content }: HeroProps) {
   }, []);
 
   return (
-    <section id="home" ref={heroRef} className="relative  flex sm:min-h-[50vh]  w-full scroll-mt-40 min-h-[60vh] sm:pt-20  max-sm:-mb-30  flex-col items-center justify-between  px-4  py-16   ">
+    <section id="home" ref={heroRef} className="relative flex min-h-[70svh] w-full scroll-mt-24 flex-col items-center justify-center gap-6 px-4 py-12 sm:gap-8 sm:px-6 sm:py-16">
       {/* <Image src="/pbl-round.svg" alt="Lucid logo" width={200} height={100} className="z-1 outline relative " /> */}
 
-      <div className="absolute -top-4">
-        <LogoSpriteAnimation className="mb-6 flex items-center justify-center" />
+      <div ref={logoRef} className="relative flex h-40 w-40 shrink-0 items-center justify-center sm:h-52 sm:w-52">
+        <LogoSpriteAnimation className="flex h-full w-full items-center justify-center [&_img]:h-full [&_img]:w-full [&_img]:object-contain" />
       </div>
 
-      <h2 className="relative mb-10 mt-30 block whitespace-pre-line text-center sm:text-8xl  text-4xl font-extrabold uppercase   text-[#1B5E3F]! ">
+      <h1 className="relative w-full max-w-6xl whitespace-pre-line text-center text-[clamp(2.25rem,7.5vw,6rem)] font-bold uppercase leading-[1.05] text-[#1B5E3F]!">
         {content.mobileHeadline}
-      </h2>
-      <div className="absolute inset-0 sm:-translate-y-20 -translate-y-40 hidden   min-h-[20vh] ">
+      </h1>
+      {/* <div className="absolute inset-0 sm:-translate-y-20 -translate-y-40 hidden   min-h-[20vh] ">
         <HeroCurvedHeadline svgRef={svgRef} curvedHeadline={content.curvedHeadline} />
-      </div>
+      </div> */}
 
       {/* Center Logo and Text Content */}
       <div className="relative z-20 w-full  flex flex-col items-center justify-end   text-center">
@@ -92,9 +92,9 @@ export default function Hero({ content }: HeroProps) {
 
         {/* Agency Description */}
         <div ref={textRef} className="max-w-xl px-4 sm:px-6">
-          <p className="mb-3 text-xl font-bold text-[#1B5E3F]! sm:text-2xl md:text-3xl">
+          {/* <h3 className="mb-3 text-[#1B5E3F]! tracking-normal">
             {content.eyebrow}
-          </p>
+          </h3> */}
           <p className="max-w-2xl text-base  leading-relaxed text-[#2a3a2a] sm:text-lg md:text-xl">
             {content.description}
           </p>

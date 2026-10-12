@@ -106,9 +106,9 @@ export default function ProjectsPerspective() {
       className="relative flex min-h-[72vh] items-center justify-center overflow-hidden px-4 py-20 sm:px-8"
     >
       <div className="w-full ">
-        <p className="section-title-text mb-12 text-center text-xs font-semibold uppercase tracking-[0.45em] text-[#1b5e3f] sm:text-sm sm:tracking-[0.8em]">
+        <h3 className="section-title-text mb-12 text-center uppercase text-[#1b5e3f] tracking-normal">
           Featured Works
-        </p>
+        </h3>
 
         {/* Perspective stage + seamless duplicated track for infinite slow drift. */}
         <div

@@ -386,7 +386,7 @@ export default function OurServices({ sectionRef }: OurServicesProps) {
 </span>
 
       </div>
-      <p className="sticky top-16 mt-6 w-full px-4 text-center text-xs uppercase tracking-[0.45em] text-white sm:top-20 sm:mt-10 sm:text-right sm:text-xl sm:tracking-[1.2rem]">our services</p>
+      <h3 className="sticky top-16 mt-6 w-full px-4 text-center uppercase text-white sm:top-20 sm:mt-10 sm:text-right tracking-normal">our services</h3>
       <div className="sticky top-24 z-40 flex h-36 w-full bg-[#b7c970]/0 text-[#174826] sm:top-40 sm:h-60">
         <div className="flex h-full w-full items-center justify-center">
           

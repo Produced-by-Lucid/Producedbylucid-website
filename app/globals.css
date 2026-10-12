@@ -2,6 +2,8 @@
 
 :root {
   --color-cream: #FFE1CD;
+  --font-display: "Instrument Sans Variable", "Instrument Sans", sans-serif;
+  --font-header: var(--font-display);
   --font-paragraph: "Zilla Slab", "Georgia", "Times New Roman", serif;
 }
 
@@ -15,7 +17,7 @@
 .prose-blog { color: rgba(255,225,205,0.85); line-height: 1.8; }
 .prose-blog p { margin-bottom: 1rem; }
 .prose-blog h2 { font-family: var(--font-display), sans-serif; font-size: 1.6rem; font-weight: 700; color: #fff; margin: 2rem 0 0.6rem; }
-.prose-blog h3 { font-family: var(--font-display), sans-serif; font-size: 1.25rem; font-weight: 600; color: #fff; margin: 1.5rem 0 0.5rem; }
+.prose-blog h3 { font-family: "Zilla Slab", "Georgia", "Times New Roman", serif; font-size: 1.25rem; font-weight: 700; color: #fff; margin: 1.5rem 0 0.5rem; }
 .prose-blog strong { font-weight: 700; color: #fff; }
 .prose-blog em { font-style: italic; }
 .prose-blog u { text-decoration: underline; }
@@ -43,8 +45,51 @@ body {
   overflow-x: hidden;
 }
 
-h1, h2, h3, h4, h5, h6, button {
-  font-family: var(--font-display), sans-serif;
+h1, h2, button,
+.font-display, .font-header,
+[font-family="var(--font-display), sans-serif"],
+[style*="var(--font-display)"] {
+  font-family: var(--font-display);
+  font-stretch: condensed;
+  font-variation-settings: "wdth" 75;
+}
+
+h3, h4, h5, h6 {
+  font-family: "Zilla Slab", "Georgia", "Times New Roman", serif;
+  font-weight: 700;
+  font-stretch: normal;
+  font-variation-settings: normal;
+}
+
+@layer base {
+  h3 {
+    font-size: 1.5rem;
+  }
+
+  @media (min-width: 640px) {
+    h3 {
+      font-size: 1.875rem;
+    }
+  }
+}
+
+@layer base {
+  p {
+    font-family: "Instrument Sans Variable", "Instrument Sans", sans-serif;
+    font-weight: 400;
+    font-stretch: normal;
+    font-variation-settings: "wdth" 100;
+  }
+}
+
+@keyframes service-icon-spin {
+  from { transform: rotateZ(0deg); }
+  to { transform: rotateZ(360deg); }
+}
+
+.service-icon-spin {
+  transform-origin: center;
+  animation: service-icon-spin 1s linear infinite;
 }
 
 @keyframes twinkle-1 {

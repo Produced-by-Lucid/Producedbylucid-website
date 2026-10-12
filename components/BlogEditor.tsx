@@ -1067,7 +1067,7 @@ export default function BlogEditor({
   if (!postData) {
     return (
       <div style={{ padding: '1rem', color: '#9f2538', background: '#fff6f7', borderRadius: 12, border: '1px solid #f3ced5', fontSize: '0.92rem' }}>
-        Cannot parse blog post data. Please check the JSON format or switch to Code view.
+        This post could not be loaded because its saved content is invalid.
       </div>
     );
   }
@@ -1075,7 +1075,7 @@ export default function BlogEditor({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
       {/* Post metadata section */}
-      <section style={{ ...blockCardStyle, background: '#fafbfc', borderColor: '#dce3ea' }}>
+      <section style={{ ...blockCardStyle, background: '#fff', borderColor: '#ddd', borderRadius: 18 }}>
         <button
           type="button"
           onClick={() => setDetailsOpen((o) => !o)}

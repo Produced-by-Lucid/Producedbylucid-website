@@ -13,7 +13,7 @@ export default function BlogFooter({ settings, morePosts }: BlogFooterProps) {
       {morePosts.length > 0 && (
         <section className="bg-[#0d1f14] px-4 py-16 sm:px-8 sm:py-24">
           <div className="mx-auto max-w-4xl">
-            <p className="mb-2 text-xs uppercase tracking-[0.4em] text-[#DB612D]">More Posts</p>
+            <h3 className="mb-2 uppercase text-[#DB612D] tracking-normal">More Posts</h3>
             {/* <h2 className="mb-10 text-3xl font-bold text-white sm:text-4xl">More from the journal</h2> */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {morePosts.map((post) => (

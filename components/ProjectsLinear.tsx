@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import Image from 'next/image';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import type { ProjectEntry } from '@/lib/site-types';
 import FollowMouseDrag from './FollowMouseDrag';
+import { LuPause, LuPlay } from 'react-icons/lu';
 
 interface ProjectsLinearProps {
   cards: ProjectEntry[];
@@ -24,6 +25,9 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
   const isHoveringRef = useRef(false);
   const lastPointerXRef = useRef(0);
   const activePointerIdRef = useRef<number | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const isPausedRef = useRef(false);
+  const navigationTweenRef = useRef<gsap.core.Tween | null>(null);
 
   const loopCards = useMemo(() => [...cards, ...cards], [cards]);
 
@@ -104,6 +108,7 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
         gsap.ticker.remove(applyCurve);
         window.removeEventListener('resize', applyCurve);
       }
+      navigationTweenRef.current?.kill();
       loopTweenRef.current?.kill();
       loopTweenRef.current = null;
       ctx.revert();
@@ -113,11 +118,77 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
   const setMotionSpeed = (timeScale: number, duration: number) => {
     if (!loopTweenRef.current) return;
     gsap.to(loopTweenRef.current, {
-      timeScale,
+      timeScale: isPausedRef.current ? 0 : timeScale,
       duration,
       ease: 'power3.out',
       overwrite: 'auto',
     });
+  };
+
+  const moveProject = (direction: number) => {
+    const loop = loopTweenRef.current;
+    if (!loop || cards.length < 2) return;
+    navigationTweenRef.current?.kill();
+    gsap.killTweensOf(loop);
+    loop.timeScale(0);
+    // Keep backward navigation within a positive repeat cycle.
+    if (loop.totalTime() < loop.duration()) {
+      loop.totalTime(loop.totalTime() + loop.duration());
+    }
+    const position = { time: loop.totalTime() };
+    navigationTweenRef.current = gsap.to(position, {
+      time: position.time + direction * loop.duration() / cards.length,
+      duration: 0.5,
+      ease: 'power2.inOut',
+      onUpdate: () => { loop.totalTime(position.time); },
+      onComplete: () => { setMotionSpeed(isHoveringRef.current ? 0.18 : 1, 0.4); },
+    });
+  };
+
+  const snapNearestProject = () => {
+    const loop = loopTweenRef.current;
+    const track = marqueeTrackRef.current;
+    const viewport = marqueeViewportRef.current;
+    if (!loop || !track || !viewport || !cards.length) return;
+
+    navigationTweenRef.current?.kill();
+    gsap.killTweensOf(loop);
+    loop.timeScale(0);
+
+    const viewportRect = viewport.getBoundingClientRect();
+    const center = viewportRect.left + viewportRect.width / 2;
+    let nearestDistance = Infinity;
+    curveItemRefs.current.forEach((item) => {
+      if (!item) return;
+      const rect = item.getBoundingClientRect();
+      const distance = rect.left + rect.width / 2 - center;
+      if (Math.abs(distance) < Math.abs(nearestDistance)) nearestDistance = distance;
+    });
+
+    const loopWidth = track.offsetWidth / 2;
+    if (!Number.isFinite(nearestDistance) || loopWidth <= 0) return;
+    // Adding a complete cycle preserves the position and leaves room to snap backward.
+    if (loop.totalTime() < loop.duration()) {
+      loop.totalTime(loop.totalTime() + loop.duration());
+    }
+    const position = { time: loop.totalTime() };
+    navigationTweenRef.current = gsap.to(position, {
+      time: position.time + nearestDistance / loopWidth * loop.duration(),
+      duration: 0.65,
+      ease: 'power2.inOut',
+      onUpdate: () => { loop.totalTime(position.time); },
+    });
+  };
+
+  const togglePlayback = () => {
+    isPausedRef.current = !isPausedRef.current;
+    setIsPaused(isPausedRef.current);
+    if (isPausedRef.current) {
+      snapNearestProject();
+    } else {
+      navigationTweenRef.current?.kill();
+      setMotionSpeed(1, 0.5);
+    }
   };
 
   const pauseLoop = () => {
@@ -135,6 +206,7 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!loopTweenRef.current) return;
+    navigationTweenRef.current?.kill();
     isDraggingRef.current = true;
     activePointerIdRef.current = event.pointerId;
     lastPointerXRef.current = event.clientX;
@@ -159,6 +231,10 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
     isDraggingRef.current = false;
     activePointerIdRef.current = null;
     event.currentTarget.releasePointerCapture(event.pointerId);
+    if (isPausedRef.current) {
+      snapNearestProject();
+      return;
+    }
     setMotionSpeed(isHoveringRef.current ? 0.18 : 1, 0.65);
   };
 
@@ -169,7 +245,7 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
   return (
     <section id="projects" ref={sectionRef} className="relative flex min-h-[75vh]   scroll-mt-24 items-center justify-center overflow-hidden  px-4 pb-14  sm:min-h-[110vh] sm:pb-[20vh]">
       <div className="relative z-10 w-full ">
-                <p className="section-title-text mb-8 text-center text-xs font-semibold uppercase tracking-[0.45em] text-[#1b5e3f] sm:text-sm sm:tracking-[0.8em]">{eyebrow}</p>
+                <h3 className="section-title-text mb-8 text-center uppercase text-[#1b5e3f] tracking-normal">{eyebrow}</h3>
 
 
         <div
@@ -181,7 +257,7 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
           onDragStart={preventDragStart}
-          className="relative w-full p-3 cursor-grab active:cursor-grabbing select-none"
+          className="relative w-full p-3 cursor-grab active:cursor-grabbing select-none touch-pan-y"
           style={{ WebkitUserDrag: 'none', userSelect: 'none', MozUserSelect: 'none' } as React.CSSProperties}
         >
           <FollowMouseDrag targetRef={marqueeViewportRef} label="view" />
@@ -224,6 +300,17 @@ export default function ProjectsLinear({ cards, eyebrow }: ProjectsLinearProps) 
               </div>
             ))}
           </div>
+        </div>
+        <div className="flex items-center justify-center gap-4 text-[#1b5e3f] sm:hidden" role="group" aria-label="Project controls">
+          <button type="button" onClick={() => moveProject(-1)} disabled={cards.length < 2} aria-label="Previous project" className="flex h-12 w-12 items-center justify-center rounded-full border border-current text-2xl disabled:opacity-30">
+            <span aria-hidden="true">←</span>
+          </button>
+          <button type="button" onClick={togglePlayback} aria-label={isPaused ? 'Play projects' : 'Pause projects'} aria-pressed={isPaused} className="flex h-12 w-12 items-center justify-center rounded-full border border-current">
+            {isPaused ? <LuPlay size={20} aria-hidden="true" /> : <LuPause size={20} aria-hidden="true" />}
+          </button>
+          <button type="button" onClick={() => moveProject(1)} disabled={cards.length < 2} aria-label="Next project" className="flex h-12 w-12 items-center justify-center rounded-full border border-current text-2xl disabled:opacity-30">
+            <span aria-hidden="true">→</span>
+          </button>
         </div>
       </div>
     </section>

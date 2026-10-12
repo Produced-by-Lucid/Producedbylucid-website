@@ -20,6 +20,7 @@ if (typeof window !== 'undefined') {
 }
 
 type LandingPageProps = {
+  visibility?: HomePageContent['sectionVisibility'];
   settings: SiteSettings;
   servicesSection: HomePageContent['servicesSection'];
   testimonialsSection: HomePageContent['testimonialsSection'];
@@ -29,6 +30,7 @@ type LandingPageProps = {
 };
 
 export default function LandingPage({
+  visibility = {},
   settings,
   servicesSection,
   testimonialsSection,
@@ -45,7 +47,7 @@ export default function LandingPage({
     }
 
     // CTA section animation
-    gsap.from('.cta-content', {
+    if (visibility.services !== false) gsap.from('.cta-content', {
       scrollTrigger: {
         trigger: ctaRef.current,
         start: 'top 80%',
@@ -58,7 +60,7 @@ export default function LandingPage({
     });
 
     // Testimonials section animation
-    gsap.from('.testimonial-content', {
+    if (visibility.testimonials !== false) gsap.from('.testimonial-content', {
       scrollTrigger: {
         trigger: '#testimonials',
         start: 'top 80%',
@@ -92,7 +94,7 @@ export default function LandingPage({
     });
 
     // Curved text animation - sliding along the path
-    gsap.fromTo('.testimonial-curved-text',
+    if (visibility.testimonials !== false) gsap.fromTo('.testimonial-curved-text',
       {
         attr: { startOffset: '0%' },
         opacity: 0,
@@ -128,7 +130,7 @@ export default function LandingPage({
         document.documentElement.style.scrollBehavior = 'auto';
       }
     };
-  }, []);
+  }, [visibility.services, visibility.testimonials]);
 
   return (
     <>
@@ -140,23 +142,25 @@ export default function LandingPage({
 
 
         {/* Our Services */}
-        <SectionsInViewMotion>
+        {visibility.services !== false && (
+<SectionsInViewMotion>
           <OurServicesGrid
             sectionRef={ctaRef}
             eyebrow={servicesSection.eyebrow}
             services={servicesSection.items}
           />
         </SectionsInViewMotion>
+        )}
 
-        <TestimonialsSection heading={testimonialsSection.curvedHeading} testimonials={testimonials} />
+        {visibility.testimonials !== false && <TestimonialsSection heading={testimonialsSection.curvedHeading} testimonials={testimonials} />}
 
-        {blogSection ? (
+        {blogSection && visibility.blog !== false ? (
           <SectionsInViewMotion>
             <BlogPosts eyebrow={blogSection.eyebrow} heading={blogSection.heading} posts={posts} />
           </SectionsInViewMotion>
         ) : null}
         {/* Footer */}
-        <footer id="contact" className="relative z-10 flex min-h-[60vh] scroll-mt-24 flex-col justify-end gap-14 bg-linear-to-b from-black 60% to-[#19532B] py-8 sm:gap-20 sm:py-12">
+        {visibility.footer !== false && <footer id="contact" className="relative z-10 flex min-h-[60vh] scroll-mt-24 flex-col justify-end gap-14 bg-linear-to-b from-black 60% to-[#19532B] py-8 sm:gap-20 sm:py-12">
           <div className="w-full text-center space-y-8 text-cream/60">
             {/* orange gradient  */}
             <div className="absolute bottom-0 z-0 mb-8 h-32 w-full sm:h-48 md:h-64">
@@ -205,7 +209,7 @@ export default function LandingPage({
             </div>
             <p className="w-full px-6 py-5 text-center text-sm opacity-70 duration-200 hover:opacity-100 sm:text-right sm:text-base">{settings.footerCopyright}</p>
           </div>
-        </footer>
+        </footer>}
       </div>
     </>
   );

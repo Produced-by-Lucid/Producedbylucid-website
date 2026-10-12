@@ -2,8 +2,9 @@
 
 import '@fontsource-variable/instrument-sans/index.css';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
-import { LuRefreshCw, LuPanelLeftClose, LuPanelLeftOpen, LuArrowLeft, LuGripVertical, LuX, LuSave, LuChevronDown, LuChevronRight, LuLogOut, LuRotateCw, LuPencil, LuPlus, LuTrash2 } from 'react-icons/lu';
+import { LuRefreshCw, LuPanelLeftClose, LuPanelLeftOpen, LuArrowLeft, LuGripVertical, LuX, LuSave, LuChevronDown, LuChevronRight, LuLogOut, LuRotateCw, LuPencil, LuPlus, LuTrash2, LuVideo, LuImage } from 'react-icons/lu';
 import BlogEditor from './BlogEditor';
+import CmsReorderableCards from './CmsReorderableCards';
 
 // ---------------------------------------------------------------------------
 // Type definitions — shapes of API responses and internal data models
@@ -52,6 +53,7 @@ const TESTIMONIALS_PREFIX = 'testimonials/';
 // The ordered list of editable sections on the home page.
 // Each "key" must match a top-level key in content/pages/home.json.
 const HOME_PAGE_SECTIONS: SectionDefinition[] = [
+  { key: 'sectionVisibility', label: 'Show / Hide Sections', description: 'Check a section to show it on the homepage. Uncheck to hide it, then click Save. Hidden content is kept so you can show it again later.' },
   { key: 'hero', label: 'Hero' },
   { key: 'projectsSection', label: 'Featured Projects' },
   { key: 'featureShowcase', label: 'Intro' },
@@ -69,7 +71,7 @@ const inputBase: CSSProperties = {
   border: '1px solid #d5dde6',
   fontSize: '0.9rem',
   fontFamily: 'inherit',
-  background: '#fbfdff',
+  background: '#fff',
   boxSizing: 'border-box',
 };
 
@@ -125,10 +127,14 @@ function ImageField({
   value,
   onChange,
   password,
+  showPreview = true,
+  accept = 'image/*,video/mp4,video/webm,.svg',
 }: {
   value: string;
   onChange: (value: string) => void;
   password: string;
+  showPreview?: boolean;
+  accept?: string;
 }) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -204,7 +210,7 @@ function ImageField({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*,video/mp4,video/webm,.svg"
+          accept={accept}
           style={{ display: 'none' }}
           onChange={(event) => {
             const file = event.target.files?.[0];
@@ -236,7 +242,7 @@ function ImageField({
         <p style={{ color: '#9f2538', fontSize: '0.85rem', margin: 0 }}>{uploadError}</p>
       ) : null}
 
-      {value && isImage && !previewError ? (
+      {showPreview && value && isImage && !previewError ? (
         <div
           style={{
             maxWidth: 200,
@@ -258,6 +264,30 @@ function ImageField({
       ) : null}
     </div>
   );
+}
+
+function ProjectCardFields({ content, onChange, password }: { content: string; onChange: (value: string) => void; password: string }) {
+  let data: JsonObject;
+  try { data = JSON.parse(content) as JsonObject; } catch { return <p>Invalid project JSON.</p>; }
+  const update = (key: string, value: string) => onChange(JSON.stringify({ ...data, [key]: value }, null, 2));
+  const image = typeof data.image === 'string' ? data.image : '';
+  const video = typeof data.video === 'string' ? data.video : '';
+  return <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div style={{ width: 96, height: 96, borderRadius: 14, overflow: 'hidden', background: '#f5f5f5', display: 'grid', placeItems: 'center' }}>
+        {image ? <img src={image} alt="Project thumbnail" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <LuImage size={30} color="#bbb" aria-label="No image added" />}
+      </div>
+      <span title={video ? 'Video added' : 'No video added'} aria-label={video ? 'Video added' : 'No video added'} style={{ color: video ? '#de692e' : '#b8b8b8', opacity: video ? 1 : 0.35 }}><LuVideo size={28} /></span>
+    </div>
+    {['company', 'title', 'date', 'image', 'video', 'href'].map(key => <div key={key}>
+      <label style={{ display: 'block', fontWeight: 700, color: '#111', fontSize: '0.95rem', marginBottom: '0.3rem' }}>
+        {key === 'href' ? 'Link' : formatKeyLabel(key)}
+        <div style={{ marginTop: '0.3rem', fontWeight: 400 }}>
+          {key === 'image' || key === 'video' ? <ImageField value={String(data[key] ?? '')} onChange={value => update(key, value)} password={password} showPreview={false} /> : <input style={{ ...inputBase, background: '#fff', borderColor: '#d7d7d7', color: '#444' }} value={String(data[key] ?? '')} onChange={event => update(key, event.target.value)} />}
+        </div>
+      </label>
+    </div>)}
+  </div>;
 }
 
 // ---------------------------------------------------------------------------
@@ -291,6 +321,12 @@ function Field({
 }) {
   if (typeof value === 'string') {
     if (isImageField(fieldKey, value)) {
+      if (fieldKey === 'icon') {
+        return <div>
+          <ImageField value={value} onChange={v => onChange(v)} password={password} accept="image/png,image/svg+xml,.png,.svg" />
+          <p style={{ margin: '0.4rem 0 0', color: '#6b7b8c', fontSize: '0.8rem' }}>Use a transparent PNG or SVG for the icon.</p>
+        </div>;
+      }
       return <ImageField value={value} onChange={(v) => onChange(v)} password={password} />;
     }
 
@@ -392,67 +428,15 @@ function Field({
       }
     };
 
-    const hasObjectItems =
-      value.length > 0 && !Array.isArray(value[0]) && value[0] !== null && typeof value[0] === 'object';
-
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {value.map((item, index) => (
-          <div
-            key={`${fieldKey}-${index}`}
-            style={{
-              background: '#f4f8fc',
-              borderRadius: 12,
-              padding: '0.85rem 2.5rem 0.85rem 0.9rem',
-              position: 'relative',
-              border: '1px solid #e3ebf3',
-            }}
-          >
-            {hasObjectItems ? (
-              <div
-                style={{
-                  fontWeight: 700,
-                  fontSize: '0.76rem',
-                  color: '#6b7b8c',
-                  marginBottom: '0.6rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                }}
-              >
-                Item {index + 1}
-              </div>
-            ) : null}
-
-            <Field
-              fieldKey={`${fieldKey}[${index}]`}
-              value={item}
-              onChange={(nextValue) => updateItem(index, nextValue)}
-              password={password}
-              depth={depth + 1}
-            />
-
-            <button
-              type="button"
-              onClick={() => removeItem(index)}
-              title="Remove item"
-              style={{
-                position: 'absolute',
-                top: '0.55rem',
-                right: '0.55rem',
-                background: '#fff',
-                border: '1px solid #f0cfd5',
-                color: '#b73449',
-                cursor: 'pointer',
-                fontSize: '0.88rem',
-                lineHeight: 1,
-                padding: '0.25rem 0.45rem',
-                borderRadius: 999,
-              }}
-            >
-              x
-            </button>
-          </div>
-        ))}
+        <CmsReorderableCards
+          items={value}
+          onReorder={onChange}
+          onRemove={removeItem}
+          columns={false}
+          renderItem={(item, index) => <Field fieldKey={fieldKey + '[' + index + ']'} value={item} onChange={next => updateItem(index, next)} password={password} depth={depth + 1} />}
+        />
 
         <button
           type="button"
@@ -484,9 +468,7 @@ function Field({
           display: 'flex',
           flexDirection: 'column',
           gap: '0.95rem',
-          ...(depth > 0
-            ? { paddingLeft: '1rem', borderLeft: '3px solid #e8eef4', marginTop: '0.3rem' }
-            : {}),
+
         }}
       >
         {Object.entries(objectValue).map(([key, nestedValue]) => (
@@ -498,8 +480,8 @@ function Field({
                 fontSize: '0.78rem',
                 color: '#6b7b8c',
                 marginBottom: '0.38rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
+                textTransform: 'none',
+                letterSpacing: 'normal',
               }}
             >
               {formatKeyLabel(key)}
@@ -529,11 +511,11 @@ function Field({
 // 2. Splits it into "sections" based on top-level keys (e.g. "hero", "servicesSection")
 // 3. For known pages (like home.json), sections are shown in the preferred order
 //    defined in HOME_PAGE_SECTIONS. Unknown keys appear after them.
-// 4. Each section renders a <Field> for its value
+// 4. Section navigation shows one <Field> at a time
 // 5. When any field changes, the entire JSON is re-serialized and passed to `onChange`
 //
 // If the JSON is invalid or not an object, an error message is shown instead,
-// prompting the user to switch to the Code Editor tab to fix the syntax.
+// explaining why the saved content cannot be edited.
 // ---------------------------------------------------------------------------
 
 function FormEditor({
@@ -541,11 +523,13 @@ function FormEditor({
   onChange,
   password,
   topLevelSections,
+  activeSectionKey,
 }: {
   content: string;
   onChange: (content: string) => void;
   password: string;
   topLevelSections?: SectionDefinition[];
+  activeSectionKey?: string;
 }) {
   const { data, error } = useMemo(() => {
     if (!content.trim()) {
@@ -556,12 +540,12 @@ function FormEditor({
       const parsed = JSON.parse(content) as unknown;
 
       if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
-        return { data: null, error: 'Top-level JSON must be an object. Use Code Editor instead.' };
+        return { data: null, error: 'This content could not be loaded into the editor: a JSON object is required.' };
       }
 
       return { data: parsed as JsonObject, error: null };
     } catch {
-      return { data: null, error: 'Invalid JSON. Switch to Code Editor to fix the syntax first.' };
+      return { data: null, error: 'This content could not be loaded because the saved JSON is invalid.' };
     }
   }, [content]);
 
@@ -578,6 +562,10 @@ function FormEditor({
 
     return [...preferredSections, ...remainingSections];
   }, [data, topLevelSections]);
+
+  const selectedSectionKey =
+    sections.find((section) => section.key === activeSectionKey)?.key ??
+    sections[0]?.key;
 
   if (error || !data) {
     return (
@@ -598,7 +586,7 @@ function FormEditor({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      {sections.map((section) => (
+      {sections.filter((section) => !activeSectionKey || section.key === selectedSectionKey).map((section) => (
         <section
           key={section.key}
           data-cms-section={section.key}
@@ -610,8 +598,8 @@ function FormEditor({
             scrollMarginTop: '1rem',
           }}
         >
-          <div style={{ marginBottom: '0.9rem' }}>
-            <h3 style={{ margin: 0, fontSize: '1rem', color: '#132030' }}>{section.label}</h3>
+          <div style={{ marginBottom: ((!activeSectionKey && sections.length > 1) || section.description) ? '0.9rem' : 0 }}>
+            {!activeSectionKey && sections.length > 1 && <h3 style={{ margin: 0, fontSize: '1rem', color: '#132030' }}>{section.label}</h3>}
             {section.description ? (
               <p style={{ margin: '0.35rem 0 0', color: '#697b8d', fontSize: '0.88rem' }}>{section.description}</p>
             ) : null}
@@ -699,13 +687,12 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
   const [status, setStatus] = useState<string | null>(null);  // Success message (e.g. "Saved at ...")
 
   // --- UI state ---
-  const [activeEditorTab, setActiveEditorTab] = useState<'form' | 'code'>('form');  // Form vs Code editor toggle
   const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('pages');    // Pages vs Settings sidebar tab
   const [homeOpen, setHomeOpen] = useState(true);        // Home page accordion expanded
   const [blogOpen, setBlogOpen] = useState(true);        // Blog accordion expanded
   const [projectsOpen, setProjectsOpen] = useState(false); // Projects accordion expanded
   const [libraryOpen, setLibraryOpen] = useState(false);  // Content library accordion expanded
-  const [pendingSectionScroll, setPendingSectionScroll] = useState<string | null>(null); // Section to scroll to after content loads
+  const [activeHomeSection, setActiveHomeSection] = useState('hero');
 
   // --- Preview & floating panel state ---
   const [previewKey, setPreviewKey] = useState(0);              // Incremented to force iframe reload
@@ -720,7 +707,6 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
   const [resizing, setResizing] = useState(false); // Whether the user is dragging the resize handle
 
   // --- Refs ---
-  const formScrollRef = useRef<HTMLDivElement>(null);   // Scrollable container for the form editor
   const panelRef = useRef<HTMLDivElement>(null);        // The floating panel element
   const [dragging, setDragging] = useState(false);      // Whether the user is currently dragging the panel
   const dragOffsetRef = useRef({ x: 0, y: 0 });        // Offset from mouse to panel top-left when drag started
@@ -740,24 +726,6 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     void loadFileContent(selectedFile);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFile]);
-
-  // --- Effect: scroll to a specific section in the form editor ---
-  // Triggered when clicking a home page section in the sidebar.
-  useEffect(() => {
-    if (!pendingSectionScroll || selectedFile !== HOME_PAGE_FILE || activeEditorTab !== 'form' || loadingContent) {
-      return;
-    }
-
-    const scrollHost = formScrollRef.current;
-    const sectionElement = scrollHost?.querySelector<HTMLElement>(`[data-cms-section="${pendingSectionScroll}"]`);
-
-    if (!scrollHost || !sectionElement) {
-      return;
-    }
-
-    sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setPendingSectionScroll(null);
-  }, [activeEditorTab, content, loadingContent, pendingSectionScroll, selectedFile]);
 
   // --- Effect: load all files in category when gridView opens ---
   useEffect(() => {
@@ -865,7 +833,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     [files.length],
   );
 
-  /** True when the selected file is Markdown. Markdown files always use the code editor. */
+  /** Markdown files use a plain text editor. */
   const isMdFile = selectedFile?.endsWith('.md') ?? false;
 
   /** True when the selected file is a blog post JSON file (uses the block editor). */
@@ -1075,15 +1043,14 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     }
   }
 
-  /** Selects a file in the sidebar and clears any pending section scroll. */
+  /** Selects a file in the sidebar. */
   function selectFile(filePath: string) {
     setSelectedFile(filePath);
-    setPendingSectionScroll(null);
     setGridView(null);
     setPanelOpen(true);
   }
 
-  /** Selects the home page file, switches to the form editor, and queues a scroll to the given section. */
+  /** Selects a standalone homepage section form. */
   function openHomeSection(sectionKey: string) {
     // For projects/testimonials, open the grid picker instead of the home form
     if (sectionKey === 'projectsSection' && projectFiles.length > 0) {
@@ -1102,14 +1069,33 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     setGridView(null);
     setActiveSidebarTab('pages');
     setHomeOpen(true);
-    setActiveEditorTab('form');
-    setPendingSectionScroll(sectionKey);
+    setActiveHomeSection(sectionKey);
     setPanelOpen(true);
 
     if (selectedFile !== HOME_PAGE_FILE) {
       setSelectedFile(HOME_PAGE_FILE);
     }
   }
+
+  const editorTitle = (() => {
+    if (gridView === 'projects') return 'Featured Projects';
+    if (gridView === 'testimonials') return 'Testimonials';
+    if (selectedFile === SITE_SETTINGS_FILE) return 'Site Settings';
+    if (selectedFile === HOME_PAGE_FILE) {
+      let available: JsonObject = {};
+      try { available = JSON.parse(content) as JsonObject; } catch { /* Use the selected section while loading. */ }
+      const section = HOME_PAGE_SECTIONS.find(item => item.key === activeHomeSection && (!Object.keys(available).length || item.key in available))
+        ?? HOME_PAGE_SECTIONS.find(item => item.key in available);
+      return section?.label ?? 'Home';
+    }
+    if (!selectedFile) return '';
+    try {
+      const data = JSON.parse(content) as JsonObject;
+      const label = selectedFile.startsWith(TESTIMONIALS_PREFIX) ? data.author : data.title;
+      if (typeof label === 'string' && label.trim()) return label;
+    } catch { /* Fall back to the file label for non-JSON content. */ }
+    return contentLabel(selectedFile);
+  })();
 
   // --- Render ---
   // Minimal layout: full-screen preview, slim sidebar nav strip on the left,
@@ -1122,6 +1108,8 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
         .cms-dashboard h4, .cms-dashboard h5, .cms-dashboard h6,
         .cms-dashboard button, .cms-dashboard label, .cms-dashboard a {
           font-family: inherit;
+          font-stretch: normal;
+          font-variation-settings: normal;
         }
       `}</style>
 
@@ -1245,10 +1233,12 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
             {activeSidebarTab === 'pages' ? (
               <>
                 {/* Home page sections */}
-                <div style={{ marginBottom: '0.3rem' }}>
+                <div style={{ marginBottom: '0.5rem', border: '1px solid #e7edf2', borderRadius: 10, padding: '0.3rem', background: '#fff' }}>
                   <button
                     type="button"
-                    onClick={() => setHomeOpen((c) => !c)}
+                    aria-expanded={homeOpen}
+                      aria-controls="cms-home-items"
+                      onClick={() => setHomeOpen((c) => !c)}
                     style={{
                       width: '100%',
                       border: 'none',
@@ -1269,7 +1259,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                     Home
                     {homeOpen ? <LuChevronDown size={12} style={{ color: '#a0aab4' }} /> : <LuChevronRight size={12} style={{ color: '#a0aab4' }} />}
                   </button>
-                  {homeOpen
+                  <div id="cms-home-items">{homeOpen
                     ? HOME_PAGE_SECTIONS.map((section) => (
                         <button
                           key={section.key}
@@ -1282,7 +1272,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                             background:
                               (section.key === 'projectsSection' && gridView === 'projects') ||
                               (section.key === 'testimonialsSection' && gridView === 'testimonials') ||
-                              (selectedFile === HOME_PAGE_FILE && pendingSectionScroll === section.key)
+                              (selectedFile === HOME_PAGE_FILE && gridView === null && activeHomeSection === section.key)
                                 ? '#f0f2f5'
                                 : 'transparent',
                             color: '#3a4a5a',
@@ -1296,14 +1286,16 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                           {section.label}
                         </button>
                       ))
-                    : null}
+                    : null}</div>
                 </div>
 
                 {/* Blog */}
-                <div style={{ marginBottom: '0.3rem' }}>
+                <div style={{ marginBottom: '0.5rem', border: '1px solid #e7edf2', borderRadius: 10, padding: '0.3rem', background: '#fff' }}>
                   <button
                     type="button"
-                    onClick={() => setBlogOpen((c) => !c)}
+                    aria-expanded={blogOpen}
+                      aria-controls="cms-blog-items"
+                      onClick={() => setBlogOpen((c) => !c)}
                     style={{
                       width: '100%',
                       border: 'none',
@@ -1324,7 +1316,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                     Blog
                     {blogOpen ? <LuChevronDown size={12} style={{ color: '#a0aab4' }} /> : <LuChevronRight size={12} style={{ color: '#a0aab4' }} />}
                   </button>
-                  {blogOpen
+                  <div id="cms-blog-items">{blogOpen
                     ? blogFiles.map((fp) => (
                         <div
                           key={fp}
@@ -1400,7 +1392,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                           </button>
                         </div>
                       ))
-                    : null}
+                    : null}</div>
                   {blogOpen && (
                     <button
                       type="button"
@@ -1455,10 +1447,12 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                 </div>
 
                 {/* Projects */}
-                {projectFiles.length > 0 ? (
-                  <div style={{ marginBottom: '0.3rem' }}>
+                {(
+                  <div style={{ marginBottom: '0.5rem', border: '1px solid #e7edf2', borderRadius: 10, padding: '0.3rem', background: '#fff' }}>
                     <button
                       type="button"
+                      aria-expanded={projectsOpen}
+                      aria-controls="cms-projects-items"
                       onClick={() => setProjectsOpen((c) => !c)}
                       style={{
                         width: '100%',
@@ -1480,7 +1474,12 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                       Projects
                       {projectsOpen ? <LuChevronDown size={12} style={{ color: '#a0aab4' }} /> : <LuChevronRight size={12} style={{ color: '#a0aab4' }} />}
                     </button>
-                    {projectsOpen
+                    {projectsOpen && projectFiles.length > 0 && (
+                      <button type="button" onClick={() => { setGridView('projects'); setPanelWidth(Math.max(panelWidth, 700)); setPanelOpen(true); }} style={{ width: '100%', textAlign: 'left', border: 'none', background: '#f5f6f7', borderRadius: 8, padding: '0.5rem', color: '#3a4a5a', cursor: 'pointer', fontSize: '0.8rem' }}>
+                        Edit / Reorder Projects
+                      </button>
+                    )}
+                    <div id="cms-projects-items">{projectsOpen
                       ? projectFiles.map((fp) => (
                           <div
                             key={fp}
@@ -1556,13 +1555,50 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                             </button>
                           </div>
                         ))
-                      : null}
+                      : null}</div>
+                    {projectsOpen && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const title = prompt('Enter a name for the new project:');
+                          if (!title?.trim()) return;
+                          const slug = title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                          if (!slug) { setError('Enter a project name containing letters or numbers.'); return; }
+                          const filePath = PROJECTS_PREFIX + slug + '.json';
+                          try {
+                            const existing = await fetch('/api/cms/files', { headers: { 'x-cms-password': password } });
+                            if (!existing.ok) throw new Error('Could not check project name.');
+                            const listing = await existing.json() as FileListResponse;
+                            if (listing.files.includes(filePath)) { setError('A project with this name already exists.'); return; }
+                            const template: import('@/lib/site-types').ProjectEntry = {
+                              title: title.trim(), company: '', date: '', image: '/obj.svg', video: '', href: '', order: Date.now(),
+                            };
+                            const content = JSON.stringify(template, null, 2);
+                            const response = await fetch('/api/cms/files/' + encodeURI(filePath), {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json', 'x-cms-password': password },
+                              body: JSON.stringify({ content }),
+                            });
+                            if (!response.ok) throw new Error('Failed to create project.');
+                            setFiles((previous) => [...new Set([...previous, filePath])].sort());
+                            selectFile(filePath);
+                            setContent(content);
+                            setError('');
+                          } catch (error) {
+                            setError(error instanceof Error ? error.message : 'Failed to create project.');
+                          }
+                        }}
+                        style={{ width: '100%', textAlign: 'left', border: '1px dashed #cdd5dc', background: 'transparent', color: '#6b7b8c', borderRadius: 8, padding: '0.5rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.3rem' }}
+                      >
+                        <LuPlus size={14} /> New Project
+                      </button>
+                    )}
                   </div>
-                ) : null}
+                )}
 
                 {/* Library */}
                 {libraryFiles.length > 0 ? (
-                  <div style={{ marginBottom: '0.3rem' }}>
+                  <div style={{ marginBottom: '0.5rem', border: '1px solid #e7edf2', borderRadius: 10, padding: '0.3rem', background: '#fff' }}>
                     <button
                       type="button"
                       onClick={() => setLibraryOpen((c) => !c)}
@@ -1715,7 +1751,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
                 <LuGripVertical size={14} style={{ color: '#b0b8c1', flexShrink: 0 }} />
                 <span style={{ fontWeight: 700, fontSize: '0.82rem', color: '#132030', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {gridView ? (gridView === 'projects' ? 'Featured Projects' : 'Testimonials') : selectedFile === HOME_PAGE_FILE ? 'Home' : selectedFile ? contentLabel(selectedFile) : ''}
+                  {editorTitle}
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
@@ -1738,7 +1774,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                       gap: '0.3rem',
                     }}
                   >
-                    {saving ? '...' : <><LuSave size={12} /> Save All</>}
+                    {saving ? '...' : <><LuSave size={12} /> Save changes</>}
                   </button>
                 ) : selectedFile ? (
                   <button
@@ -1783,145 +1819,39 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
               </div>
             </div>
 
-            {/* Form / Code tab switcher (JSON files only, not blog posts which get the block editor) */}
-            {!isMdFile && !isBlogPost && selectedFile ? (
-              <div style={{ display: 'flex', padding: '0 0.7rem', borderBottom: '1px solid #edf0f3', flexShrink: 0 }}>
-                {(['form', 'code'] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => setActiveEditorTab(tab)}
-                    style={{
-                      border: 'none',
-                      borderBottom: activeEditorTab === tab ? '2px solid #de692e' : '2px solid transparent',
-                      background: 'none',
-                      padding: '0.45rem 0.7rem',
-                      fontWeight: activeEditorTab === tab ? 700 : 500,
-                      color: activeEditorTab === tab ? '#de692e' : '#8a96a3',
-                      cursor: 'pointer',
-                      fontSize: '0.78rem',
-                      marginBottom: '-1px',
-                    }}
-                  >
-                    {tab === 'form' ? 'Form' : 'Code'}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-
             {/* Scrollable editor body */}
             <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '0.65rem 0.7rem' }}>
               {gridView ? (
                 loadingMulti ? (
                   <p style={{ color: '#4a6276', padding: '0.5rem 0', fontSize: '0.85rem' }}>Loading all items...</p>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.65rem' }}>
-                    {(gridView === 'projects' ? projectFiles : testimonialFiles).map((fp, idx) => (
-                      <section
-                        key={fp}
-                        style={{
-                          background: '#fff',
-                          border: '1px solid #e7edf2',
-                          borderRadius: 14,
-                          overflow: 'hidden',
-                          display: 'flex',
-                          flexDirection: 'column',
-                        }}
-                      >
-                        {/* Card header with order badge */}
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '0.45rem 0.7rem',
-                          borderBottom: '1px solid #edf0f3',
-                          background: '#fafbfc',
-                          gap: '0.4rem',
-                        }}>
-                          <button
-                            type="button"
-                            disabled={idx === 0}
-                            onClick={() => {
-                              const allFiles = gridView === 'projects' ? projectFiles : testimonialFiles;
-                              const prevFp = allFiles[idx - 1];
-                              if (!prevFp) return;
-                              const curr = multiContents[fp];
-                              const prev = multiContents[prevFp];
-                              if (!curr || !prev) return;
-                              // Swap order values
-                              try {
-                                const currObj = JSON.parse(curr) as JsonObject;
-                                const prevObj = JSON.parse(prev) as JsonObject;
-                                const tmpOrder = currObj.order;
-                                currObj.order = prevObj.order;
-                                prevObj.order = tmpOrder;
-                                setMultiContents((m) => ({ ...m, [fp]: JSON.stringify(currObj, null, 2), [prevFp]: JSON.stringify(prevObj, null, 2) }));
-                              } catch { /* ignore parse errors */ }
-                            }}
-                            style={{ border: 'none', background: 'none', cursor: idx === 0 ? 'default' : 'pointer', color: idx === 0 ? '#cdd5dc' : '#7a8794', fontSize: '0.82rem', padding: '0.1rem 0.3rem' }}
-                          >
-                            &lsaquo;
-                          </button>
-                          <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 24,
-                            height: 24,
-                            borderRadius: 6,
-                            background: '#de692e',
-                            color: '#fff',
-                            fontWeight: 800,
-                            fontSize: '0.72rem',
-                          }}>
-                            {idx + 1}
-                          </span>
-                          <button
-                            type="button"
-                            disabled={idx === (gridView === 'projects' ? projectFiles : testimonialFiles).length - 1}
-                            onClick={() => {
-                              const allFiles = gridView === 'projects' ? projectFiles : testimonialFiles;
-                              const nextFp = allFiles[idx + 1];
-                              if (!nextFp) return;
-                              const curr = multiContents[fp];
-                              const next = multiContents[nextFp];
-                              if (!curr || !next) return;
-                              try {
-                                const currObj = JSON.parse(curr) as JsonObject;
-                                const nextObj = JSON.parse(next) as JsonObject;
-                                const tmpOrder = currObj.order;
-                                currObj.order = nextObj.order;
-                                nextObj.order = tmpOrder;
-                                setMultiContents((m) => ({ ...m, [fp]: JSON.stringify(currObj, null, 2), [nextFp]: JSON.stringify(nextObj, null, 2) }));
-                              } catch { /* ignore parse errors */ }
-                            }}
-                            style={{ border: 'none', background: 'none', cursor: idx === (gridView === 'projects' ? projectFiles : testimonialFiles).length - 1 ? 'default' : 'pointer', color: idx === (gridView === 'projects' ? projectFiles : testimonialFiles).length - 1 ? '#cdd5dc' : '#7a8794', fontSize: '0.82rem', padding: '0.1rem 0.3rem' }}
-                          >
-                            &rsaquo;
-                          </button>
-                        </div>
-
-                        {/* Card form body */}
-                        <div style={{ padding: '0.5rem 0.6rem', flex: 1 }}>
-                          {multiContents[fp] !== undefined ? (
-                            <FormEditor
-                              content={multiContents[fp]}
-                              onChange={(next) => setMultiContents((prev) => ({ ...prev, [fp]: next }))}
-                              password={password}
-                            />
-                          ) : (
-                            <p style={{ color: '#8a96a3', fontSize: '0.82rem' }}>Not loaded</p>
-                          )}
-                        </div>
-                      </section>
-                    ))}
-                  </div>
+                  <CmsReorderableCards
+                    items={(gridView === 'projects' ? projectFiles : testimonialFiles)
+                      .filter(file => multiContents[file] !== undefined)
+                      .map((file): JsonObject & { __file: string } => ({ ...JSON.parse(multiContents[file]) as JsonObject, __file: file }))
+                      .sort((a, b) => Number(a.order ?? 0) - Number(b.order ?? 0))}
+                    getKey={item => item.__file}
+                    onReorder={items => setMultiContents(previous => {
+                      const next = { ...previous };
+                      items.forEach((item, index) => {
+                        const { __file, ...data } = item;
+                        next[__file] = JSON.stringify({ ...data, order: index + 1 }, null, 2);
+                      });
+                      return next;
+                    })}
+                    renderItem={item => {
+                      const { __file, order, ...data } = item;
+                      return gridView === 'projects'
+                        ? <ProjectCardFields content={JSON.stringify({ ...data, order })} onChange={next => setMultiContents(previous => ({ ...previous, [__file]: next }))} password={password} />
+                        : <Field fieldKey="testimonial" value={data} onChange={next => setMultiContents(previous => ({ ...previous, [__file]: JSON.stringify({ ...(next as JsonObject), order }, null, 2) }))} password={password} />;
+                    }}
+                  />
                 )
               ) : loadingContent ? (
                 <p style={{ color: '#4a6276', padding: '0.5rem 0', fontSize: '0.85rem' }}>Loading...</p>
               ) : isBlogPost ? (
                 <BlogEditor key={selectedFile} content={content} onChange={setContent} password={password} />
-              ) : isMdFile || activeEditorTab === 'code' ? (
+              ) : isMdFile ? (
                 <textarea
                   value={content}
                   onChange={(event) => setContent(event.target.value)}
@@ -1940,9 +1870,11 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                     boxSizing: 'border-box',
                   }}
                 />
+              ) : selectedFile?.startsWith(PROJECTS_PREFIX) ? (
+                <ProjectCardFields content={content} onChange={setContent} password={password} />
               ) : (
-                <div ref={formScrollRef}>
-                  <FormEditor content={content} onChange={setContent} password={password} topLevelSections={topLevelSections} />
+                <div>
+                  <FormEditor content={content} onChange={setContent} password={password} topLevelSections={topLevelSections} activeSectionKey={selectedFile === HOME_PAGE_FILE ? activeHomeSection : undefined} />
                 </div>
               )}
 
