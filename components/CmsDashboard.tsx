@@ -685,6 +685,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
   const [loadingFiles, setLoadingFiles] = useState(false);
   const [loadingContent, setLoadingContent] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [creatingProject, setCreatingProject] = useState(false);
   const [error, setError] = useState<string | null>(null);    // Error message shown at bottom of editor
   const [status, setStatus] = useState<string | null>(null);  // Success message (e.g. "Saved at ...")
 
@@ -746,7 +747,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     if (!gridView) return;
     const prefix = gridView === 'projects' ? PROJECTS_PREFIX : TESTIMONIALS_PREFIX;
     const filesToLoad = files.filter((fp) => fp.startsWith(prefix)).sort((a, b) => a.localeCompare(b));
-    if (filesToLoad.length === 0) return;
+    if (filesToLoad.length === 0) { setMultiContents({}); setLoadingMulti(false); return; }
 
     let cancelled = false;
     setLoadingMulti(true);
@@ -1058,6 +1059,40 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     }
   }
 
+  async function createFeaturedProject() {
+    const title = prompt('Enter a name for the new project:');
+    if (!title?.trim()) return;
+    const slug = title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    if (!slug) { setError('Enter a project name containing letters or numbers.'); return; }
+    const filePath = PROJECTS_PREFIX + slug + '.json';
+    setCreatingProject(true);
+    setError(null);
+    try {
+      const existing = await fetch('/api/cms/files', { headers: { 'x-cms-password': password } });
+      if (!existing.ok) throw new Error('Could not check project name.');
+      const listing = await existing.json() as FileListResponse;
+      if (listing.files.includes(filePath)) { setError('A project with this name already exists.'); return; }
+      const template: import('@/lib/site-types').ProjectEntry = {
+        title: title.trim(), company: '', date: '', image: '/obj.svg', video: '', href: '', order: Date.now(),
+      };
+      const content = JSON.stringify(template, null, 2);
+      const response = await fetch('/api/cms/files/' + encodeURI(filePath), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-cms-password': password },
+        body: JSON.stringify({ content }),
+      });
+      if (!response.ok) throw new Error('Failed to create project.');
+      setFiles((previous) => [...new Set([...previous, filePath])].sort());
+      selectFile(filePath);
+      setContent(content);
+      setError('');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to create project.');
+    } finally {
+      setCreatingProject(false);
+    }
+  }
+
   /** Selects a file in the sidebar. */
   function selectFile(filePath: string) {
     setMobileMoreOpen(false);
@@ -1074,7 +1109,7 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
     setMobileMoreOpen(false);
     setMobileSection('home');
     // For projects/testimonials, open the grid picker instead of the home form
-    if (sectionKey === 'projectsSection' && projectFiles.length > 0) {
+    if (sectionKey === 'projectsSection') {
       setGridView('projects');
       setPanelWidth(Math.max(panelWidth, 700));
       setPanelOpen(true);
@@ -1612,35 +1647,8 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
                     {projectsOpen && (
                       <button
                         type="button"
-                        onClick={async () => {
-                          const title = prompt('Enter a name for the new project:');
-                          if (!title?.trim()) return;
-                          const slug = title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-                          if (!slug) { setError('Enter a project name containing letters or numbers.'); return; }
-                          const filePath = PROJECTS_PREFIX + slug + '.json';
-                          try {
-                            const existing = await fetch('/api/cms/files', { headers: { 'x-cms-password': password } });
-                            if (!existing.ok) throw new Error('Could not check project name.');
-                            const listing = await existing.json() as FileListResponse;
-                            if (listing.files.includes(filePath)) { setError('A project with this name already exists.'); return; }
-                            const template: import('@/lib/site-types').ProjectEntry = {
-                              title: title.trim(), company: '', date: '', image: '/obj.svg', video: '', href: '', order: Date.now(),
-                            };
-                            const content = JSON.stringify(template, null, 2);
-                            const response = await fetch('/api/cms/files/' + encodeURI(filePath), {
-                              method: 'PUT',
-                              headers: { 'Content-Type': 'application/json', 'x-cms-password': password },
-                              body: JSON.stringify({ content }),
-                            });
-                            if (!response.ok) throw new Error('Failed to create project.');
-                            setFiles((previous) => [...new Set([...previous, filePath])].sort());
-                            selectFile(filePath);
-                            setContent(content);
-                            setError('');
-                          } catch (error) {
-                            setError(error instanceof Error ? error.message : 'Failed to create project.');
-                          }
-                        }}
+                        onClick={() => void createFeaturedProject()}
+                        disabled={creatingProject}
                         style={{ width: '100%', textAlign: 'left', border: '1px dashed #cdd5dc', background: 'transparent', color: '#6b7b8c', borderRadius: 8, padding: '0.5rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.3rem' }}
                       >
                         <LuPlus size={14} /> New Project
@@ -1909,6 +1917,11 @@ export default function CmsDashboard({ initialPassword }: { initialPassword: str
             )}
             {/* Scrollable editor body */}
             <div className="cms-editor-body" style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '0.65rem 0.7rem' }}>
+              {(gridView === 'projects' || (!gridView && selectedFile?.startsWith(PROJECTS_PREFIX))) && (
+                <button type="button" disabled={creatingProject || saving} onClick={() => void createFeaturedProject()} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', width: '100%', marginBottom: '0.75rem', padding: '0.5rem 0.75rem', border: '1px dashed #de692e', borderRadius: 10, background: '#fff8f3', color: '#a74d20', font: 'inherit', fontSize: '0.85rem', fontWeight: 600, cursor: creatingProject ? 'wait' : 'pointer' }}>
+                  <LuPlus size={16} /> {creatingProject ? 'Creating project...' : 'Add featured project'}
+                </button>
+              )}
               {gridView ? (
                 loadingMulti ? (
                   <p style={{ color: '#4a6276', padding: '0.5rem 0', fontSize: '0.85rem' }}>Loading all items...</p>
