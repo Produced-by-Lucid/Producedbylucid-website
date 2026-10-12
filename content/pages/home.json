@@ -6,7 +6,7 @@
     "intro": true,
     "services": true,
     "testimonials": true,
-    "blog": true,
+    "blog": false,
     "footer": true
   },
   "hero": {
